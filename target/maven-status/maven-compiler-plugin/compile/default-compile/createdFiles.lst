@@ -5,7 +5,6 @@ it\unige\dibris\mas\Main$3.class
 it\unige\dibris\mas\behaviours\ProcessTriageQueueBehaviour.class
 it\unige\dibris\mas\behaviours\ReceiveAndQueueBehaviour.class
 it\unige\dibris\mas\agents\QueueManagerAgent.class
-it\unige\dibris\mas\behaviours\AnnounceDoctorFreeBehaviour.class
 it\unige\dibris\mas\Main$2.class
 it\unige\dibris\mas\behaviours\ReceiveFromRegistrationBehaviour.class
 it\unige\dibris\mas\ontology\PatientSeverity.class
@@ -13,19 +12,13 @@ it\unige\dibris\mas\behaviours\ProcessTriageQueueBehaviour$1.class
 it\unige\dibris\mas\agents\TriageAgent.class
 it\unige\dibris\mas\behaviours\ReceiveTriageResultBehaviour.class
 it\unige\dibris\mas\Main$4.class
-it\unige\dibris\mas\behaviours\ProcessTriageMessagesBehaviour.class
-it\unige\dibris\mas\behaviours\SendQueueStatusBehaviour.class
 it\unige\dibris\mas\agents\PatientAgent.class
-it\unige\dibris\mas\behaviours\ReceiveQueueTriageBehaviour.class
-it\unige\dibris\mas\behaviours\TreatPatientBehaviour.class
 it\unige\dibris\mas\gui\SimulationLogger.class
 it\unige\dibris\mas\behaviours\ReceivePatientFromQueueBehaviour.class
 it\unige\dibris\mas\gui\ColorStats.class
 it\unige\dibris\mas\behaviours\ProcessQueueBehaviour.class
-it\unige\dibris\mas\behaviours\ReceivePatientTriageRequestBehaviour.class
 it\unige\dibris\mas\behaviours\ProcessRegistrationQueueBehaviour.class
 it\unige\dibris\mas\Main$1.class
-it\unige\dibris\mas\behaviours\AssignPatientToDoctorBehaviour.class
 it\unige\dibris\mas\ontology\TriageColor.class
 it\unige\dibris\mas\gui\SimulationGUI.class
 it\unige\dibris\mas\agents\DoctorAgent.class

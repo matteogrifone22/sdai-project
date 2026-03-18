@@ -45,7 +45,7 @@ public class ReceivePatientFromQueueBehaviour extends CyclicBehaviour {
                 
                 it.unige.dibris.mas.Main.updateDoctorStatus(
                     myAgent.getLocalName(), 
-                    "Free");
+                    "FREE");
                 
                 SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Finished treating: " + patientId);
                 doctorAgent.setCurrentPatientId(null);

@@ -238,11 +238,9 @@ public class Main extends Application {
                     setWrapText(true);
 
                     if (status.contains("FREE")) {
-                        SimulationLogger.getInstance().log("[DEBUG] Doctor FREE: " + status);
                         setStyle(
                                 "-fx-text-fill: #228B22; -fx-font-family: 'Courier New'; -fx-font-size: 12; -fx-font-weight: bold;");
                     } else {
-                        SimulationLogger.getInstance().log("[DEBUG] Doctor NOT FREE: '" + status + "'");
                         setStyle(
                                 "-fx-text-fill: #DC143C; -fx-font-family: 'Courier New'; -fx-font-size: 12; -fx-font-weight: bold;");
                     }
