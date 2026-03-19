@@ -1,6 +1,7 @@
 package it.unige.dibris.mas.agents;
 
-import it.unige.dibris.mas.behaviours.ReceivePatientFromQueueBehaviour;
+import it.unige.dibris.mas.Main;
+import it.unige.dibris.mas.behaviours.ReceivePatientBehaviour;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import jade.core.Agent;
 
@@ -11,11 +12,11 @@ public class DoctorAgent extends Agent {
     protected void setup() {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Doctor Agent started");
 
-        it.unige.dibris.mas.Main.updateDoctorStatus(getLocalName(), "FREE");
+        Main.updateDoctorStatus(getLocalName(), "FREE");
 
         // Aggiungi comportamenti per gestire i pazienti (da implementare)
-        addBehaviour(new ReceivePatientFromQueueBehaviour(this, it.unige.dibris.mas.Main.sharedQueueManager));
-        it.unige.dibris.mas.Main.agentReady();
+        addBehaviour(new ReceivePatientBehaviour(this, Main.sharedQueueManager, Main.sharedBedManager));
+        Main.agentReady();
     }
 
     protected void takeDown() {

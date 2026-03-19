@@ -7,6 +7,7 @@ import it.unige.dibris.mas.agents.QueueManagerAgent;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
 import it.unige.dibris.mas.gui.SimulationLogger;
+import it.unige.dibris.mas.Main;
 
 import java.util.Map;
 import java.util.Random;
@@ -57,7 +58,7 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
                 // NUOVO: Aggiungi il paziente direttamente alla coda del QueueManager
                 queueManager.addPatient(currentPatientId, color);
 
-                it.unige.dibris.mas.Main.updateColorStats(color.name());
+                Main.updateColorStats(color.name());
 
                 currentPatientId = null;
             }

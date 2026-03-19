@@ -5,6 +5,7 @@ import jade.lang.acl.ACLMessage;
 import it.unige.dibris.mas.agents.TriageAgent;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientSeverity;
+import it.unige.dibris.mas.Main;
 
 public class ReceiveFromRegistrationBehaviour extends CyclicBehaviour {
 
@@ -21,7 +22,7 @@ public class ReceiveFromRegistrationBehaviour extends CyclicBehaviour {
                 TriageAgent triageAgent = (TriageAgent) myAgent;
 
                 triageAgent.addWaitingPatient(patientId, severity);
-                it.unige.dibris.mas.Main.updateWaitingForTriage(patientId, true);
+                Main.updateWaitingForTriage(patientId, true);
 
                 SimulationLogger.getInstance().log("[TriageAgent] " + patientId + " waiting for triage. Queue: "
                         + triageAgent.getWaitingPatients().size());

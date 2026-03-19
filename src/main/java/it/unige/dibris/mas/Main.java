@@ -2,12 +2,16 @@ package it.unige.dibris.mas;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -21,6 +25,7 @@ import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
 import it.unige.dibris.mas.agents.QueueManagerAgent;
+import it.unige.dibris.mas.agents.BedManagerAgent;
 import it.unige.dibris.mas.gui.ColorStats;
 import java.util.concurrent.CountDownLatch;
 
@@ -29,7 +34,7 @@ public class Main extends Application {
     private static Map<String, ColorStats> colorStatsMap = new HashMap<>();
     private static ContainerController container;
     private static int patientCounter = 0;
-    private static CountDownLatch edInitLatch = new CountDownLatch(5); // 5 ED Agents: Registration, Triage,
+    private static CountDownLatch edInitLatch = new CountDownLatch(6); // 5 ED Agents: Registration, Triage,
                                                                        // QueueManager, Doctor_1, Doctor_2
 
     private TextArea logArea;
@@ -76,6 +81,10 @@ public class Main extends Application {
         // Crea la GUI
         createGUI(primaryStage);
     }
+
+    private static GridPane bedsGridPane;
+    private static Map<Integer, VBox> bedBoxes = new HashMap<>(); // Per aggiornamenti veloci
+    private static ObservableList<String> bedStatusList = FXCollections.observableArrayList();
 
     private void createGUI(Stage primaryStage) {
         // Log Area
@@ -332,20 +341,33 @@ public class Main extends Application {
                 barChart);
 
         // ========== BLOCCO (1,1) - SOON ==========
+        // ========== BLOCCO (1,1) - BED MANAGEMENT ==========
 
-        VBox comingSoonBox = new VBox(20);
-        comingSoonBox.setAlignment(javafx.geometry.Pos.CENTER);
-        comingSoonBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: #F0F0F0;");
+        bedsGridPane = new GridPane();
+        bedsGridPane.setHgap(10);
+        bedsGridPane.setVgap(10);
+        bedsGridPane.setPadding(new Insets(10));
+        bedsGridPane.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: #F5F5F5;");
 
-        javafx.scene.control.Label titleLabel = new javafx.scene.control.Label("🚧 Under Construction 🚧");
-        titleLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #FF8C00;");
+        // Crea 5 letti (grid 2x3, ma con 5 celle)
+        for (int i = 1; i <= 5; i++) {
+            VBox bedBox = createBedBox(i);
+            bedBoxes.put(i, bedBox);
 
-        javafx.scene.control.Label subtitleLabel = new javafx.scene.control.Label("Bed Management coming soon...");
-        subtitleLabel.setStyle("-fx-font-size: 14; -fx-text-fill: #999999;");
+            int row = (i - 1) / 3; // Riga (0 o 1)
+            int col = (i - 1) % 3; // Colonna (0, 1, o 2)
 
-        comingSoonBox.getChildren().addAll(titleLabel, subtitleLabel);
+            bedsGridPane.add(bedBox, col, row);
+        }
 
-        // ========== FINE PAZIENTI IN CURA ==========
+        VBox bedsContainer = new VBox(10);
+        bedsContainer.setPadding(new Insets(10));
+        bedsContainer.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
+        bedsContainer.getChildren().addAll(
+                new Label("🛏️ Bed Management"),
+                new Separator(),
+                bedsGridPane);
+
         // ========== GRID LAYOUT 2x2 ==========
 
         gridPane.setHgap(10);
@@ -356,7 +378,7 @@ public class Main extends Application {
         gridPane.add(logBox, 0, 0); // (0,0) - Log + Buttons
         gridPane.add(queueBox, 1, 0); // (0,1) - Queue List
         gridPane.add(chartBox, 0, 1); // (1,0) - Bar Chart
-        gridPane.add(comingSoonBox, 1, 1); // (1,1) - Placeholder
+        gridPane.add(bedsContainer, 1, 1); // (1,1) - Bed Management
 
         // Configura le colonne e righe per distribuire equamente lo spazio
         javafx.scene.layout.ColumnConstraints col = new javafx.scene.layout.ColumnConstraints();
@@ -389,6 +411,61 @@ public class Main extends Application {
         primaryStage.show();
 
         SimulationLogger.getInstance().log("GUI Ready! You can now create patients.");
+    }
+
+    private static VBox createBedBox(int bedId) {
+        VBox bedBox = new VBox(5);
+        bedBox.setPadding(new Insets(10));
+        bedBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: white;");
+        bedBox.setAlignment(Pos.TOP_CENTER);
+        bedBox.setPrefWidth(150);
+        bedBox.setPrefHeight(150);
+
+        // Titolo letto
+        Label bedLabel = new Label("Bed " + bedId);
+        bedLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+
+        // Cerchio colorato (vuoto = libero, colorato = occupato)
+        Circle bedCircle = new Circle(30);
+        bedCircle.setFill(javafx.scene.paint.Color.web("#E8E8E8"));
+        bedCircle.setStroke(javafx.scene.paint.Color.web("#999999"));
+        bedCircle.setStrokeWidth(2);
+
+        // Info paziente
+        Label patientLabel = new Label("Free");
+        patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #999999;");
+        patientLabel.setWrapText(true);
+        patientLabel.setMaxWidth(130);
+
+        // Info colore
+        Label colorLabel = new Label("");
+        colorLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #666666;");
+
+        // Info tempo
+        Label timeLabel = new Label("");
+        timeLabel.setStyle("-fx-font-size: 9; -fx-text-fill: #999999;");
+
+        bedBox.getChildren().addAll(bedLabel, bedCircle, patientLabel, colorLabel, timeLabel);
+
+        // Salva i componenti per aggiornamenti futuri
+        bedBox.setUserData(new BedUIData(bedCircle, patientLabel, colorLabel, timeLabel));
+
+        return bedBox;
+    }
+
+    // Classe interna per mantenere i riferimenti ai componenti
+    private static class BedUIData {
+        Circle circle;
+        Label patientLabel;
+        Label colorLabel;
+        Label timeLabel;
+
+        BedUIData(Circle circle, Label patientLabel, Label colorLabel, Label timeLabel) {
+            this.circle = circle;
+            this.patientLabel = patientLabel;
+            this.colorLabel = colorLabel;
+            this.timeLabel = timeLabel;
+        }
     }
 
     private static javafx.collections.ObservableList<String> waitingForTriageItems;
@@ -464,6 +541,49 @@ public class Main extends Application {
                 }
             }
         });
+    }
+
+    public static void updateBedUI(int bedId, String patientId, String colorName, long admissionTime) {
+        Platform.runLater(() -> {
+            VBox bedBox = bedBoxes.get(bedId);
+            if (bedBox == null)
+                return;
+
+            BedUIData data = (BedUIData) bedBox.getUserData();
+
+            if (patientId == null) {
+                // Letto libero
+                data.circle.setFill(javafx.scene.paint.Color.web("#E8E8E8"));
+                data.patientLabel.setText("Free");
+                data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #999999;");
+                data.colorLabel.setText("");
+                data.timeLabel.setText("");
+            } else {
+                // Letto occupato
+                String hexColor = getHexColorForBed(colorName);
+                data.circle.setFill(javafx.scene.paint.Color.web(hexColor));
+                data.patientLabel.setText(patientId);
+                data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #000000; -fx-font-weight: bold;");
+                data.colorLabel.setText("Color: " + colorName);
+            }
+        });
+    }
+
+    private static String getHexColorForBed(String colorName) {
+        switch (colorName.toUpperCase()) {
+            case "WHITE":
+                return "#F5F5F5";
+            case "BLUE":
+                return "#4169E1";
+            case "GREEN":
+                return "#228B22";
+            case "ORANGE":
+                return "#FF8C00";
+            case "RED":
+                return "#DC143C";
+            default:
+                return "#000000";
+        }
     }
 
     private static javafx.collections.ObservableList<Map.Entry<String, TriageColor>> queueListItems;
@@ -573,6 +693,7 @@ public class Main extends Application {
 
     // Nel Main.java, aggiungi una variabile statica
     public static QueueManagerAgent sharedQueueManager = null;
+    public static BedManagerAgent sharedBedManager = null;
 
     private void initializeED() {
         try {
@@ -592,10 +713,6 @@ public class Main extends Application {
             // Aspetta che sia inizializzato
             Thread.sleep(1000);
 
-            // IMPORTANTE: Ottieni il QueueManagerAgent dal setup() stesso
-            // (Lo faremo nel QueueManagerAgent.setup())
-
-            // Crea il TriageAgent
             Object[] triageArgs = new Object[] { Main.sharedQueueManager };
             AgentController triageAgentController = container.createNewAgent(
                     "TriageAgent",
@@ -603,9 +720,17 @@ public class Main extends Application {
                     triageArgs);
             triageAgentController.start();
 
+            AgentController bedManagerAgentController = container.createNewAgent(
+                    "BedManagerAgent",
+                    "it.unige.dibris.mas.agents.BedManagerAgent",
+                    null);
+            bedManagerAgentController.start();
+
+            Thread.sleep(1000);
+
             // Crea i DoctorAgent
             for (int i = 1; i <= 2; i++) {
-                Object[] doctorArgs = new Object[] { Main.sharedQueueManager };
+                Object[] doctorArgs = new Object[] { Main.sharedQueueManager, Main.sharedBedManager };
                 AgentController doctorController = container.createNewAgent(
                         "Doctor_" + i,
                         "it.unige.dibris.mas.agents.DoctorAgent",

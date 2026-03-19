@@ -22,4 +22,5 @@ public enum TriageColor {
     public int getPriority() {
         return priority;
     }
+   
 }

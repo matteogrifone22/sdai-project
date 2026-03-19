@@ -1,0 +1,111 @@
+package it.unige.dibris.mas.agents;
+
+import jade.core.Agent;
+import it.unige.dibris.mas.gui.SimulationLogger;
+import it.unige.dibris.mas.ontology.TriageColor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+public class BedManagerAgent extends Agent {
+
+    private Map<Integer, BedInfo> beds = new HashMap<>();
+    private ReentrantReadWriteLock bedsLock = new ReentrantReadWriteLock();
+    private int totalBeds = 5;
+
+    private class BedInfo {
+        int bedId;
+        String patientId;
+        TriageColor color;
+        long admissionTime;
+    }
+
+    protected void setup() {
+        SimulationLogger.getInstance().log("[" + getLocalName() + "] Bed Manager Agent started");
+
+        // Inizializza i letti
+        for (int i = 1; i <= totalBeds; i++) {
+            BedInfo bed = new BedInfo();
+            bed.bedId = i;
+            bed.patientId = null;
+            beds.put(i, bed);
+        }
+
+        it.unige.dibris.mas.Main.sharedBedManager = this; // ← SALVA RIFERIMENTO
+        it.unige.dibris.mas.Main.agentReady();
+    }
+
+    protected void takeDown() {
+        SimulationLogger.getInstance().log("[" + getLocalName() + "] Bed Manager Agent shutting down");
+    }
+
+    // Thread-safe: ammetti paziente a un letto
+    public void admitPatient(String patientId, TriageColor color) {
+        bedsLock.writeLock().lock();
+        try {
+            // Trova il primo letto libero
+            for (BedInfo bed : beds.values()) {
+                if (bed.patientId == null) {
+                    bed.patientId = patientId;
+                    bed.color = color;
+                    bed.admissionTime = System.currentTimeMillis();
+
+                    // ← NUOVO: Aggiorna la GUI
+                    it.unige.dibris.mas.Main.updateBedUI(bed.bedId, patientId, color.getLabel(), bed.admissionTime);
+
+                    SimulationLogger.getInstance().log("[BedManager] " + patientId + " admitted to bed " + bed.bedId
+                            + " (color: " + color.getLabel() + ")");
+                    return;
+                }
+            }
+
+            // Se nessun letto libero, dimetti il miglior paziente
+            BedInfo bestBed = findBestPatientToDischarge();
+            if (bestBed != null) {
+                SimulationLogger.getInstance().log("[BedManager] Discharging " + bestBed.patientId + " from bed "
+                        + bestBed.bedId + " to make room");
+
+                // ← NUOVO: Aggiorna la GUI (letto diventa libero)
+                it.unige.dibris.mas.Main.updateBedUI(bestBed.bedId, null, null, 0);
+
+                bestBed.patientId = null;
+                bestBed.color = null;
+                bestBed.admissionTime = 0;
+
+                // Riassegna il nuovo paziente
+                admitPatient(patientId, color);
+            }
+        } finally {
+            bedsLock.writeLock().unlock();
+        }
+    }
+
+    // Trova il miglior paziente da dimettere (più sano + più tempo a letto)
+    private BedInfo findBestPatientToDischarge() {
+        BedInfo best = null;
+
+        for (BedInfo bed : beds.values()) {
+            if (bed.patientId != null) {
+                if (best == null || isBetterToDischarge(bed, best)) {
+                    best = bed;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    // Confronta due pazienti: vero se bed1 è migliore da dimettere di bed2
+    private boolean isBetterToDischarge(BedInfo bed1, BedInfo bed2) {
+        int color1 = bed1.color.ordinal();
+        int color2 = bed2.color.ordinal();
+
+        // Se colore diverso, dimetti il più sano (colore più basso)
+        if (color1 != color2) {
+            return color1 < color2;
+        }
+
+        // Se colore uguale, dimetti chi è stato più tempo a letto
+        return bed1.admissionTime < bed2.admissionTime;
+    }
+}

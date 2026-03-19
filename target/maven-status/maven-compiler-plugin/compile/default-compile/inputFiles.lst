@@ -1,10 +1,11 @@
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\agents\PatientAgent.java
-C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\ReceivePatientFromQueueBehaviour.java
+C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\agents\BedManagerAgent.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\gui\SimulationLogger.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\ontology\TriageColor.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\agents\TriageAgent.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\RegistrationReceiveAndQueueBehaviour.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\ReceiveFromRegistrationBehaviour.java
+C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\ReceivePatientBehaviour.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\ProcessRegistrationQueueBehaviour.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\agents\DoctorAgent.java
 C:\Users\mfmat\Documents\Magistrale\SecondoAnno\SDAI\Project\sdai-project\src\main\java\it\unige\dibris\mas\behaviours\SendRegistrationBehaviour.java
