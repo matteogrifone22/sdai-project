@@ -28,7 +28,30 @@ public class QueueManagerAgent extends Agent {
     public void addPatient(String patientId, TriageColor color) {
         queueLock.writeLock().lock();
         try {
-            patientQueue.add(new java.util.AbstractMap.SimpleEntry<>(patientId, color));
+
+            if (isPatientInQueue(patientId)) {
+                SimulationLogger.getInstance().log("[QueueManager] " + patientId
+                        + " is already in the queue, skipping add.");
+                return;
+            }
+            
+            Map.Entry<String, TriageColor> newEntry = new java.util.AbstractMap.SimpleEntry<>(patientId, color);
+
+            // Trova la posizione giusta per mantenere l'ordine
+            int insertPosition = patientQueue.size();
+
+            for (int i = 0; i < patientQueue.size(); i++) {
+                TriageColor existingColor = patientQueue.get(i).getValue();
+
+                // Se il nuovo colore ha priorità MAGGIORE, inserisci prima
+                if (color.getPriority() > existingColor.getPriority()) {
+                    insertPosition = i;
+                    break;
+                }
+            }
+
+            patientQueue.add(insertPosition, newEntry);
+
             SimulationLogger.getInstance().log("[QueueManager] " + patientId + " added to queue with color "
                     + color.getLabel() + ". Queue size: " + patientQueue.size());
             it.unige.dibris.mas.Main.updateQueueListFromManager(getQueueStatus());
@@ -74,6 +97,20 @@ public class QueueManagerAgent extends Agent {
         queueLock.readLock().lock();
         try {
             return patientQueue.size();
+        } finally {
+            queueLock.readLock().unlock();
+        }
+    }
+
+    boolean isPatientInQueue(String patientId) {
+        queueLock.readLock().lock();
+        try {
+            for (Map.Entry<String, TriageColor> entry : patientQueue) {
+                if (entry.getKey().equals(patientId)) {
+                    return true;
+                }
+            }
+            return false;
         } finally {
             queueLock.readLock().unlock();
         }

@@ -34,9 +34,20 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
 
             if (patientEntry != null) {
                 String patientId = patientEntry.getKey();
-                TriageColor color = patientEntry.getValue(); 
+                TriageColor color = patientEntry.getValue();
+
+                // ← NUOVO: Controlla se il paziente era a letto
+                Integer bedId = bedManager.getPatientBedId(patientId);
+
+                if (bedId != null) {
+                    // Era a letto → libera il letto ADESSO
+                    bedManager.dischargePatientFromBed(bedId);
+                    SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Released bed " + bedId
+                            + " (Patient_" + patientId + " entering treatment)");
+                }
+
                 doctorAgent.setCurrentPatientId(patientId);
-                currentPatientColor = color; 
+                currentPatientColor = color;
                 treatmentStartTime = System.currentTimeMillis();
 
                 it.unige.dibris.mas.Main.updateDoctorStatus(
@@ -50,20 +61,25 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
             // Se sta curando, controlla se è finito
             if (System.currentTimeMillis() - treatmentStartTime >= TREATMENT_DURATION) {
                 String patientId = doctorAgent.getCurrentPatientId();
-
                 TriageColor improvedColor = improvePatientColor(currentPatientColor);
 
                 SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Treated " + patientId
                         + ": " + currentPatientColor.getLabel() + " → " + improvedColor.getLabel());
 
-                bedManager.admitPatient(patientId, improvedColor);
+                // Se LOW → dimesso, altrimenti → va a letto
+                if (improvedColor == TriageColor.WHITE) {
+                    SimulationLogger.getInstance()
+                            .log("[" + myAgent.getLocalName() + "] " + patientId + " discharged (LOW severity)");
+                } else {
+                    bedManager.admitPatient(patientId, improvedColor);
+                }
 
                 it.unige.dibris.mas.Main.updateDoctorStatus(
                         myAgent.getLocalName(),
                         "FREE");
 
                 doctorAgent.setCurrentPatientId(null);
-                currentPatientColor = null; // Reset
+                currentPatientColor = null;
             }
         }
     }

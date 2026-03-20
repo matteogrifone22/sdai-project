@@ -34,7 +34,7 @@ public class Main extends Application {
     private static Map<String, ColorStats> colorStatsMap = new HashMap<>();
     private static ContainerController container;
     private static int patientCounter = 0;
-    private static CountDownLatch edInitLatch = new CountDownLatch(6); // 5 ED Agents: Registration, Triage,
+    private static CountDownLatch edInitLatch = new CountDownLatch(9); // 5 ED Agents: Registration, Triage,
                                                                        // QueueManager, Doctor_1, Doctor_2
 
     private TextArea logArea;
@@ -413,6 +413,58 @@ public class Main extends Application {
         SimulationLogger.getInstance().log("GUI Ready! You can now create patients.");
     }
 
+    public static void highlightBedForNurseCheck(int bedId, String nurseName) {
+        Platform.runLater(() -> {
+            VBox bedBox = bedBoxes.get(bedId);
+            if (bedBox == null)
+                return;
+
+            BedUIData data = (BedUIData) bedBox.getUserData();
+
+            // Evidenzia il bordo e il background
+            bedBox.setStyle("-fx-border-color: #FFD700; -fx-border-width: 3; -fx-background-color: #FFFACD;");
+
+            // Mostra il controllo della nurse con il nome
+            data.timeLabel.setText(nurseName + " CHECK"); // ← CAMBIATO: Mostra il nome della nurse
+            data.timeLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #FF8C00; -fx-font-weight: bold;");
+
+            SimulationLogger.getInstance().log("[GUI] Bed " + bedId + " highlighted for " + nurseName + " check");
+
+            // ← CAMBIATO: Ripristina dopo 5 secondi (duration del check)
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000); // 5 secondi di check
+                    resetBedHighlight(bedId);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        });
+    }
+
+    private static void resetBedHighlight(int bedId) {
+        Platform.runLater(() -> {
+            VBox bedBox = bedBoxes.get(bedId);
+            if (bedBox == null)
+                return;
+
+            BedUIData data = (BedUIData) bedBox.getUserData();
+
+            // Ripristina lo stile normale
+            bedBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: white;");
+
+            // Ripristina l'orario di degenza
+            if (data.admissionTime == 0) {
+                // Letto libero
+                data.timeLabel.setText("");
+            } else {
+                // Letto occupato - ricalcola il tempo
+                long elapsedSeconds = (System.currentTimeMillis() - data.admissionTime) / 1000;
+                data.timeLabel.setText("Stay: " + elapsedSeconds + "s");
+            }
+        });
+    }
+
     private static VBox createBedBox(int bedId) {
         VBox bedBox = new VBox(5);
         bedBox.setPadding(new Insets(10));
@@ -459,12 +511,14 @@ public class Main extends Application {
         Label patientLabel;
         Label colorLabel;
         Label timeLabel;
+        long admissionTime;
 
         BedUIData(Circle circle, Label patientLabel, Label colorLabel, Label timeLabel) {
             this.circle = circle;
             this.patientLabel = patientLabel;
             this.colorLabel = colorLabel;
             this.timeLabel = timeLabel;
+            this.admissionTime = 0;
         }
     }
 
@@ -558,6 +612,7 @@ public class Main extends Application {
                 data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #999999;");
                 data.colorLabel.setText("");
                 data.timeLabel.setText("");
+                data.admissionTime = 0; // ← NUOVO
             } else {
                 // Letto occupato
                 String hexColor = getHexColorForBed(colorName);
@@ -565,6 +620,11 @@ public class Main extends Application {
                 data.patientLabel.setText(patientId);
                 data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #000000; -fx-font-weight: bold;");
                 data.colorLabel.setText("Color: " + colorName);
+
+                // Calcola tempo di degenza
+                long elapsedSeconds = (System.currentTimeMillis() - admissionTime) / 1000;
+                data.timeLabel.setText("Stay: " + elapsedSeconds + "s");
+                data.admissionTime = admissionTime; // ← NUOVO
             }
         });
     }
@@ -719,7 +779,7 @@ public class Main extends Application {
                     "it.unige.dibris.mas.agents.TriageAgent",
                     triageArgs);
             triageAgentController.start();
-
+            // Crea il BedManagerAgent
             AgentController bedManagerAgentController = container.createNewAgent(
                     "BedManagerAgent",
                     "it.unige.dibris.mas.agents.BedManagerAgent",
@@ -727,6 +787,27 @@ public class Main extends Application {
             bedManagerAgentController.start();
 
             Thread.sleep(1000);
+
+            // ← NUOVO: Crea le Nurse (5 letti / 2 = 2-3 nurse)
+            int totalBeds = 5;
+            int numNurses = (totalBeds + 1) / 2; // 5 → 3 nurse
+
+            for (int i = 1; i <= numNurses; i++) {
+                int startBed = (i - 1) * (totalBeds / numNurses) + 1;
+                int endBed = i * (totalBeds / numNurses);
+
+                // Ultimo nurse prende i letti rimanenti
+                if (i == numNurses) {
+                    endBed = totalBeds;
+                }
+
+                Object[] nurseArgs = new Object[] { Main.sharedBedManager, startBed, endBed };
+                AgentController nurseController = container.createNewAgent(
+                        "Nurse_" + i,
+                        "it.unige.dibris.mas.agents.NurseAgent",
+                        nurseArgs);
+                nurseController.start();
+            }
 
             // Crea i DoctorAgent
             for (int i = 1; i <= 2; i++) {

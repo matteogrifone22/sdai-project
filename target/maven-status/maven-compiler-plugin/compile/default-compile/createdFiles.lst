@@ -8,15 +8,16 @@ it\unige\dibris\mas\behaviours\ReceiveAndQueueBehaviour.class
 it\unige\dibris\mas\agents\QueueManagerAgent.class
 it\unige\dibris\mas\Main$2.class
 it\unige\dibris\mas\behaviours\ReceiveFromRegistrationBehaviour.class
-it\unige\dibris\mas\agents\BedManagerAgent$BedInfo.class
 it\unige\dibris\mas\ontology\PatientSeverity.class
 it\unige\dibris\mas\behaviours\ProcessTriageQueueBehaviour$1.class
 it\unige\dibris\mas\agents\TriageAgent.class
 it\unige\dibris\mas\behaviours\ReceiveTriageResultBehaviour.class
 it\unige\dibris\mas\Main$4.class
+it\unige\dibris\mas\behaviours\CheckBedsAndRequeueBehaviour.class
 it\unige\dibris\mas\agents\PatientAgent.class
 it\unige\dibris\mas\gui\SimulationLogger.class
 it\unige\dibris\mas\gui\ColorStats.class
+it\unige\dibris\mas\ontology\BedInfo.class
 it\unige\dibris\mas\behaviours\ProcessQueueBehaviour.class
 it\unige\dibris\mas\agents\BedManagerAgent.class
 it\unige\dibris\mas\behaviours\ProcessRegistrationQueueBehaviour.class
@@ -24,5 +25,6 @@ it\unige\dibris\mas\Main$1.class
 it\unige\dibris\mas\ontology\TriageColor.class
 it\unige\dibris\mas\Main$BedUIData.class
 it\unige\dibris\mas\gui\SimulationGUI.class
+it\unige\dibris\mas\agents\NurseAgent.class
 it\unige\dibris\mas\agents\DoctorAgent.class
 it\unige\dibris\mas\Main.class
