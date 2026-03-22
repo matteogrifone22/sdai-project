@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import it.unige.dibris.mas.ontology.BedInfo;
+import it.unige.dibris.mas.ontology.PatientQueueEntry;
 
 public class BedManagerAgent extends Agent {
 
@@ -36,7 +37,7 @@ public class BedManagerAgent extends Agent {
     }
 
     // Thread-safe: ammetti paziente a un letto
-    public void admitPatient(String patientId, TriageColor color) {
+    public void admitPatient(String patientId, TriageColor color, PatientQueueEntry queueEntry) {
         bedsLock.writeLock().lock();
         try {
             // Trova il primo letto libero
@@ -45,6 +46,7 @@ public class BedManagerAgent extends Agent {
                     bed.patientId = patientId;
                     bed.color = color;
                     bed.admissionTime = System.currentTimeMillis();
+                    bed.queueEntry = queueEntry;  
 
                     patientToBedMap.put(patientId, bed.bedId);
                     // ← NUOVO: Aggiorna la GUI
@@ -70,7 +72,7 @@ public class BedManagerAgent extends Agent {
                 bestBed.admissionTime = 0;
 
                 // Riassegna il nuovo paziente
-                admitPatient(patientId, color);
+                admitPatient(patientId, color, queueEntry);
             }
         } finally {
             bedsLock.writeLock().unlock();
@@ -117,18 +119,18 @@ public class BedManagerAgent extends Agent {
 
     // Metodo per ottenere info di un letto specifico
     public BedInfo getBedInfo(int bedId) {
-        bedsLock.readLock().lock();
-        try {
-            BedInfo bed = beds.get(bedId);
-            if (bed == null || bed.patientId == null) {
-                return null;
-            }
-            // Ritorna una copia
-            return new BedInfo(bed.bedId, bed.patientId, bed.color, bed.admissionTime);
-        } finally {
-            bedsLock.readLock().unlock();
+    bedsLock.readLock().lock();
+    try {
+        BedInfo bed = beds.get(bedId);
+        if (bed == null || bed.patientId == null) {
+            return null;
         }
+        // ← COPIA ANCHE queueEntry
+        return new BedInfo(bed.bedId, bed.patientId, bed.color, bed.admissionTime, bed.queueEntry);
+    } finally {
+        bedsLock.readLock().unlock();
     }
+}
 
     // Metodo per dimettere un paziente da un letto specifico
     public void dischargePatientFromBed(int bedId) {

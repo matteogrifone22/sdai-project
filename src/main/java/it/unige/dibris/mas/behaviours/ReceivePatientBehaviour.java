@@ -5,11 +5,11 @@ import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import it.unige.dibris.mas.agents.DoctorAgent;
-import it.unige.dibris.mas.agents.PatientAgent;
 import it.unige.dibris.mas.agents.QueueManagerAgent;
 import it.unige.dibris.mas.Main;
 import it.unige.dibris.mas.agents.BedManagerAgent;
 import it.unige.dibris.mas.gui.SimulationLogger;
+import it.unige.dibris.mas.ontology.PatientQueueEntry;
 import it.unige.dibris.mas.ontology.TriageColor;
 import java.util.Map;
 import java.util.Random;
@@ -22,7 +22,9 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
     private BedManagerAgent bedManager;
     private Random random = new Random();
     private TriageColor currentPatientColor = null;
-    private PatientAgent patientAgent; // Riferimento al paziente attuale (per statistiche)
+    private TriageColor entryColor = null;
+    private Long patientArrivalTime = null;
+    private PatientQueueEntry currentPatientEntry = null;
 
     public ReceivePatientBehaviour(Agent agent, QueueManagerAgent queueManager, BedManagerAgent bedManager,
             long treatmentDuration) {
@@ -37,12 +39,19 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
 
         // Se il dottore non sta curando nessuno, prendi un paziente dalla coda
         if (doctorAgent.getCurrentPatientId() == null) {
-            Map.Entry<String, TriageColor> patientEntry = queueManager.getNextPatient();
+            Map.Entry<PatientQueueEntry, TriageColor> patientEntry = queueManager.getNextPatient();
 
             if (patientEntry != null) {
-                String patientId = patientEntry.getKey();
-                TriageColor color = patientEntry.getValue();
-                
+                String patientId = patientEntry.getKey().patientId;
+                TriageColor entryColor = patientEntry.getKey().entryColor;
+                long ArrivalTime = patientEntry.getKey().arrivalTime;
+                TriageColor currentColor = patientEntry.getValue();
+                PatientQueueEntry queueEntry = patientEntry.getKey();
+
+                this.currentPatientColor = currentColor;
+                this.entryColor = entryColor;
+                this.patientArrivalTime = ArrivalTime;
+                this.currentPatientEntry = queueEntry;
 
                 // ← NUOVO: Controlla se il paziente era a letto
                 Integer bedId = bedManager.getPatientBedId(patientId);
@@ -55,13 +64,12 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 }
 
                 doctorAgent.setCurrentPatientId(patientId);
-                currentPatientColor = color;
                 treatmentStartTime = System.currentTimeMillis();
 
-                Main.updateDoctorStatus(myAgent.getLocalName(), patientId + "|" + color.name());
+                Main.updateDoctorStatus(myAgent.getLocalName(), patientId + "|" + currentColor.name());
 
                 SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Received patient: " + patientId
-                        + " (color: " + color.getLabel() + ")");
+                        + " (color: " + currentColor.getLabel() + ")");
             }
         } else {
             // Se sta curando, controlla se è finito
@@ -79,14 +87,15 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 // gli altri migliorano sempre
                 switch (improvedColor) {
                     case WHITE:
-                        // Paziente dimesso
-
-                        doctorAgent.send(dischargeMsg);
+                        // dimetti il paziente, rimuovilo dalle statistiche e non reinserirlo in coda
 
                         SimulationLogger.getInstance()
                                 .log("[" + myAgent.getLocalName() + "] " + patientId + " discharged (LOW severity)");
                         Main.removePatientFromColorStats(patientId, currentPatientColor.name());
 
+                        it.unige.dibris.mas.Main.updateDischargeStats(entryColor.name(),
+                                (System.currentTimeMillis() - patientArrivalTime) / 1000);
+                        doctorAgent.send(dischargeMsg);
 
                         break;
                     case GREEN:
@@ -97,9 +106,13 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                                             + " discharged (MEDIUM severity)");
 
                             Main.removePatientFromColorStats(patientId, currentPatientColor.name());
+
+                            it.unige.dibris.mas.Main.updateDischargeStats(entryColor.name(),
+                                    (System.currentTimeMillis() - patientArrivalTime) / 1000);
                             doctorAgent.send(dischargeMsg);
+
                         } else {
-                            bedManager.admitPatient(patientId, improvedColor);
+                            bedManager.admitPatient(patientId, improvedColor, currentPatientEntry);
                             Main.updatePatientColor(patientId, improvedColor.name()); // Aggiorna al nuovo
                         }
                         break;
@@ -111,14 +124,18 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                                     .log("[" + myAgent.getLocalName() + "] " + patientId
                                             + " discharged (HIGH severity)");
                             Main.removePatientFromColorStats(patientId, currentPatientColor.name());
+
+                            it.unige.dibris.mas.Main.updateDischargeStats(entryColor.name(),
+                                    (System.currentTimeMillis() - patientArrivalTime) / 1000);
                             doctorAgent.send(dischargeMsg);
+
                         } else {
-                            bedManager.admitPatient(patientId, improvedColor);
+                            bedManager.admitPatient(patientId, improvedColor, currentPatientEntry);
                             Main.updatePatientColor(patientId, improvedColor.name()); // Aggiorna al nuovo
                         }
                         break;
                     default:
-                        bedManager.admitPatient(patientId, improvedColor);
+                        bedManager.admitPatient(patientId, improvedColor, currentPatientEntry);
                         Main.removePatientFromColorStats(patientId, currentPatientColor.name()); // Decrementa ilvecchio
                         Main.updatePatientColor(patientId, improvedColor.name()); // Incrementa il nuovo
                 }

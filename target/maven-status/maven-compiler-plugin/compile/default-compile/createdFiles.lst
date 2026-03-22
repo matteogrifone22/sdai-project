@@ -17,6 +17,7 @@ it\unige\dibris\mas\agents\TriageAgent.class
 it\unige\dibris\mas\gui\GuiManager$BedUIData.class
 it\unige\dibris\mas\agents\AutomaticSpawnAgent.class
 it\unige\dibris\mas\behaviours\ReceiveTriageResultBehaviour.class
+it\unige\dibris\mas\ontology\PatientQueueEntry.class
 it\unige\dibris\mas\behaviours\CheckBedsAndRequeueBehaviour.class
 it\unige\dibris\mas\agents\PatientAgent.class
 it\unige\dibris\mas\gui\SimulationLogger.class

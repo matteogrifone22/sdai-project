@@ -57,8 +57,8 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
                 patientMsg.setContent("TRIAGE_RESULT|" + color.name());
                 myAgent.send(patientMsg);
 
-                // NUOVO: Aggiungi il paziente direttamente alla coda del QueueManager
-                queueManager.addPatient(currentPatientId, color);
+                // ← NUOVO: Aggiungi il paziente direttamente alla coda del QueueManager
+                queueManager.addPatient(new it.unige.dibris.mas.ontology.PatientQueueEntry(currentPatientId, color, System.currentTimeMillis()), color);
 
                 Main.updatePatientColor(currentPatientId, color.name());
 

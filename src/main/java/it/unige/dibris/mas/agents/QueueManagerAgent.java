@@ -2,6 +2,7 @@ package it.unige.dibris.mas.agents;
 
 import jade.core.Agent;
 import it.unige.dibris.mas.gui.SimulationLogger;
+import it.unige.dibris.mas.ontology.PatientQueueEntry;
 import it.unige.dibris.mas.ontology.TriageColor;
 import java.util.LinkedList;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class QueueManagerAgent extends Agent {
 
-    private LinkedList<Map.Entry<String, TriageColor>> patientQueue = new LinkedList<>();
+    private LinkedList<Map.Entry<PatientQueueEntry, TriageColor>> patientQueue = new LinkedList<>();
     private ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
 
     protected void setup() {
@@ -25,17 +26,17 @@ public class QueueManagerAgent extends Agent {
     }
 
     // Thread-safe: aggiungi paziente alla coda
-    public void addPatient(String patientId, TriageColor color) {
+    public void addPatient(PatientQueueEntry patient, TriageColor color) {
         queueLock.writeLock().lock();
         try {
 
-            if (isPatientInQueue(patientId)) {
-                SimulationLogger.getInstance().log("[QueueManager] " + patientId
+            if (isPatientInQueue(patient.patientId)) {
+                SimulationLogger.getInstance().log("[QueueManager] " + patient.patientId
                         + " is already in the queue, skipping add.");
                 return;
             }
             
-            Map.Entry<String, TriageColor> newEntry = new java.util.AbstractMap.SimpleEntry<>(patientId, color);
+            Map.Entry<PatientQueueEntry, TriageColor> newEntry = new java.util.AbstractMap.SimpleEntry<>(patient, color);
 
             // Trova la posizione giusta per mantenere l'ordine
             int insertPosition = patientQueue.size();
@@ -52,7 +53,7 @@ public class QueueManagerAgent extends Agent {
 
             patientQueue.add(insertPosition, newEntry);
 
-            SimulationLogger.getInstance().log("[QueueManager] " + patientId + " added to queue with color "
+            SimulationLogger.getInstance().log("[QueueManager] " + patient.patientId + " added to queue with color "
                     + color.getLabel() + ". Queue size: " + patientQueue.size());
             it.unige.dibris.mas.Main.updateQueueListFromManager(getQueueStatus());
         } finally {
@@ -61,11 +62,11 @@ public class QueueManagerAgent extends Agent {
     }
 
     // Thread-safe: prendi il primo paziente dalla coda (usato dai dottori)
-    public Map.Entry<String, TriageColor> getNextPatient() {
+    public Map.Entry<PatientQueueEntry, TriageColor> getNextPatient() {
         queueLock.writeLock().lock();
         try {
             if (!patientQueue.isEmpty()) {
-                Map.Entry<String, TriageColor> patient = patientQueue.pollFirst();
+                Map.Entry<PatientQueueEntry, TriageColor> patient = patientQueue.pollFirst();
                 it.unige.dibris.mas.Main.updateQueueListFromManager(getQueueStatus());
                 return patient;
             }
@@ -81,8 +82,8 @@ public class QueueManagerAgent extends Agent {
         try {
             StringBuilder sb = new StringBuilder();
             int position = 1;
-            for (Map.Entry<String, TriageColor> entry : patientQueue) {
-                sb.append(position).append(". ").append(entry.getKey())
+            for (Map.Entry<PatientQueueEntry, TriageColor> entry : patientQueue) {
+                sb.append(position).append(". ").append(entry.getKey().patientId)
                         .append(" (").append(entry.getValue().getLabel()).append(")\n");
                 position++;
             }
@@ -105,8 +106,8 @@ public class QueueManagerAgent extends Agent {
     boolean isPatientInQueue(String patientId) {
         queueLock.readLock().lock();
         try {
-            for (Map.Entry<String, TriageColor> entry : patientQueue) {
-                if (entry.getKey().equals(patientId)) {
+            for (Map.Entry<PatientQueueEntry, TriageColor> entry : patientQueue) {
+                if (entry.getKey().patientId.equals(patientId)) {
                     return true;
                 }
             }

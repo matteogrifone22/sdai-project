@@ -35,26 +35,25 @@ public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
     }
 
     private void checkBedAndRequeue(int bedId) {
-        BedInfo bedInfo = bedManager.getBedInfo(bedId);
+    BedInfo bed = bedManager.getBedInfo(bedId);
+    
+    if (bed != null && bed.patientId != null) {
+        long stayTime = (System.currentTimeMillis() - bed.admissionTime) / 1000;
+        
+        SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Checking patient " 
+            + bed.patientId + " in bed " + bedId + " (stay time: " + stayTime + "s)");
 
-        if (bedInfo == null || bedInfo.patientId == null) {
-            return;
-        }
-
-        long stayTime = System.currentTimeMillis() - bedInfo.admissionTime;
-
-        String patientId = bedInfo.patientId;
-        TriageColor color = bedInfo.color;
-
-        // ← MODIFICATO: Passa il nome della nurse
         it.unige.dibris.mas.Main.highlightBedForNurseCheck(bedId, myAgent.getLocalName());
 
-        SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Checking patient " + patientId
-                + " in bed " + bedId + " (stay time: " + (stayTime / 1000) + "s)");
-
-        bedManager.getQueueManager().addPatient(patientId, color);
-
-        SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Requeued " + patientId
-                + " to priority queue with color " + color.getLabel() + " (still in bed " + bedId + ")");
+        
+        // Rimetti in coda
+        if (bed.queueEntry != null) {  // ← CONTROLLA SE ESISTE
+            bedManager.getQueueManager().addPatient(bed.queueEntry, bed.color);  // ← USA queueEntry da BedInfo
+            SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Requeued " + bed.patientId 
+                + " to priority queue with color " + bed.color.getLabel() + " (still in bed " + bedId + ")");
+        } else {
+            SimulationLogger.getInstance().log("[ERROR] " + bed.patientId + " has no queueEntry!");
+        }
     }
+}
 }
