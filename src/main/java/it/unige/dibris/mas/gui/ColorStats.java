@@ -18,4 +18,8 @@ public class ColorStats {
     public void setCount(int value) {
         data.setYValue(value);
     }
+
+    public void increment() {
+        setCount(getCount() + 1);
+    }
 }

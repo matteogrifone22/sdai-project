@@ -3,6 +3,7 @@ package it.unige.dibris.mas.agents;
 import jade.core.Agent;
 import it.unige.dibris.mas.behaviours.ReceiveTriageResultBehaviour;
 import it.unige.dibris.mas.behaviours.SendRegistrationBehaviour;
+import it.unige.dibris.mas.behaviours.DischargeBehaviour;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
@@ -12,11 +13,14 @@ public class PatientAgent extends Agent {
     private String patientId;
     private boolean isRegistered;
     private PatientSeverity severity;
+    private TriageColor entryColor;
     private TriageColor color;
+    private long arrivalTime;
 
     protected void setup() {
         // Ricevi il nome dal container
         this.patientId = getLocalName();
+        this.entryColor = null;
         this.color = null;
         this.isRegistered = false;
 
@@ -33,6 +37,7 @@ public class PatientAgent extends Agent {
         }
         try {
             Thread.sleep(1000); // ← Delay di 1 secondo prima di iniziare
+            this.arrivalTime = System.currentTimeMillis();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -42,6 +47,7 @@ public class PatientAgent extends Agent {
         // Aggiungi un comportamento (creeremo dopo)
         addBehaviour(new SendRegistrationBehaviour());
         addBehaviour(new ReceiveTriageResultBehaviour());
+        addBehaviour(new DischargeBehaviour());  
 
     }
 
@@ -56,6 +62,18 @@ public class PatientAgent extends Agent {
 
     public TriageColor getColor() {
         return color;
+    }
+
+    public TriageColor getEntryColor() {
+        return entryColor;
+    }
+
+    public long getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public void setEntryColor(TriageColor entryColor) {
+        this.entryColor = entryColor;
     }
 
     public void setColor(TriageColor color) {

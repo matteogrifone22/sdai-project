@@ -48,7 +48,7 @@ public class BedManagerAgent extends Agent {
 
                     patientToBedMap.put(patientId, bed.bedId);
                     // ← NUOVO: Aggiorna la GUI
-                    it.unige.dibris.mas.Main.updateBedUI(bed.bedId, patientId, color.getLabel(), bed.admissionTime);
+                    it.unige.dibris.mas.Main.updateBedUI(bed.bedId, patientId, color.name(), bed.admissionTime);
 
                     SimulationLogger.getInstance().log("[BedManager] " + patientId + " admitted to bed " + bed.bedId
                             + " (color: " + color.getLabel() + ")");

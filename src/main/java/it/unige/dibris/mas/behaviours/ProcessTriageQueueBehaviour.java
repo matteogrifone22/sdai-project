@@ -18,12 +18,13 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
     private String currentPatientId = null;
     private PatientSeverity currentPatientSeverity = null;
     private long triageStartTime = 0;
-    private static final long TRIAGE_DURATION = 5000;
+    private long TRIAGE_DURATION = 5000;
     private QueueManagerAgent queueManager;  // ← NUOVO
 
-    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerAgent queueManager) {  // ← MODIFICATO
+    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerAgent queueManager, long triageDuration) {  // ← MODIFICATO
         super(agent, 1000);
         this.queueManager = queueManager;  // ← NUOVO
+        this.TRIAGE_DURATION = triageDuration;
     }
 
     @Override
@@ -45,6 +46,7 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
             if (System.currentTimeMillis() - triageStartTime >= TRIAGE_DURATION) {
                 PatientSeverity severity = currentPatientSeverity;
                 TriageColor color = assignColor(severity);
+               
 
                 SimulationLogger.getInstance()
                         .log("[TriageAgent] Triaging " + currentPatientId + " → " + color.getLabel());
@@ -58,7 +60,7 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
                 // NUOVO: Aggiungi il paziente direttamente alla coda del QueueManager
                 queueManager.addPatient(currentPatientId, color);
 
-                Main.updateColorStats(color.name());
+                Main.updatePatientColor(currentPatientId, color.name());
 
                 currentPatientId = null;
             }
@@ -68,7 +70,14 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
     private TriageColor assignColor(PatientSeverity severity) {
         switch (severity) {
             case LOW:
-                return (random.nextDouble() < 0.7) ? TriageColor.GREEN : TriageColor.BLUE;
+                double rand = random.nextDouble();
+                if (rand < 0.5) {
+                    return TriageColor.WHITE;
+                } else if (rand < 0.8) {
+                    return TriageColor.GREEN;
+                } else {
+                    return TriageColor.BLUE;
+                }
             case MEDIUM:
                 return (random.nextDouble() < 0.6) ? TriageColor.BLUE : TriageColor.ORANGE;
             case HIGH:

@@ -9,6 +9,7 @@ public class NurseAgent extends Agent {
     private BedManagerAgent bedManager;
     private int startBed;
     private int endBed;
+    private static final long CHECK_INTERVAL = 10000;
     
     protected void setup() {
         Object[] args = getArguments();
@@ -20,7 +21,7 @@ public class NurseAgent extends Agent {
         
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Nurse Agent started (beds " + startBed + "-" + endBed + ")");
         
-        addBehaviour(new CheckBedsAndRequeueBehaviour(this, bedManager, startBed, endBed));
+        addBehaviour(new CheckBedsAndRequeueBehaviour(this, bedManager, startBed, endBed, CHECK_INTERVAL));
         
         it.unige.dibris.mas.Main.agentReady();
     }

@@ -10,9 +10,10 @@ import java.util.Queue;
 import java.util.Map;
 
 public class ProcessRegistrationQueueBehaviour extends ProcessQueueBehaviour {
+    
 
-    public ProcessRegistrationQueueBehaviour(RegistrationAgent agent) {
-        super(agent, 2000); // 2 secondi
+    public ProcessRegistrationQueueBehaviour(RegistrationAgent agent, long processingTime) {
+        super(agent, processingTime);
     }
 
     @Override

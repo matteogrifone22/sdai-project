@@ -17,11 +17,12 @@ import jade.lang.acl.ACLMessage;
 public class RegistrationAgent extends Agent {
     private Queue<Map.Entry<String, ACLMessage>> patientQueue = new LinkedList<>();
     private List<String> registeredPatients = new ArrayList<>();
+    private static final long REGISTRATION_DURATION = 2000;  // 2 secondi (1 min reale)
 
      protected void setup() {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Registration Agent started");
         addBehaviour(new RegistrationReceiveAndQueueBehaviour());  // ← NUOVA CLASSE
-        addBehaviour(new ProcessRegistrationQueueBehaviour(this));
+        addBehaviour(new ProcessRegistrationQueueBehaviour(this, REGISTRATION_DURATION));  // ← NUOVA CLASSE
         Main.agentReady();
     }
     

@@ -1,7 +1,5 @@
 package it.unige.dibris.mas.ontology;
 
-import it.unige.dibris.mas.ontology.TriageColor;
-
 public class BedInfo {
     public int bedId;
     public String patientId;

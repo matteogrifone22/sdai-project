@@ -4,6 +4,7 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.TriageColor;
+import it.unige.dibris.mas.agents.PatientAgent;
 
 public class ReceiveTriageResultBehaviour extends CyclicBehaviour {
     
@@ -17,8 +18,10 @@ public class ReceiveTriageResultBehaviour extends CyclicBehaviour {
                 String colorName = parts[1];
                 TriageColor color = TriageColor.valueOf(colorName);
                 
-                ((it.unige.dibris.mas.agents.PatientAgent) myAgent).setTriageColor(color);
-                ((it.unige.dibris.mas.agents.PatientAgent) myAgent).logPatientInfo();
+                ((PatientAgent) myAgent).setTriageColor(color);
+                ((PatientAgent) myAgent).setEntryColor(color);
+
+                ((PatientAgent) myAgent).logPatientInfo();
                 
                 SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Received triage result: " + color.getLabel());
             }
