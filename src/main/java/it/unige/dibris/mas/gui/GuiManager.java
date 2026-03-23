@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import it.unige.dibris.mas.ontology.TriageColor;
-import jade.wrapper.ContainerController;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,14 +35,10 @@ public class GuiManager {
     // Variabili statiche per la GUI
     private static GridPane bedsGridPane;
     private static Map<Integer, VBox> bedBoxes = new HashMap<>();
-    private static Map<String, ColorStats> colorStatsMap = new HashMap<>();
     private static Map<Integer, VBox> doctorBoxes = new HashMap<>();
-    private static Map<String, DoctorUIData> doctorDataMap = new HashMap<>();
-    private static ContainerController container; // Riferimento al Container JADE
 
     // Aggiungi in cima alle variabili statiche:
     private static Map<String, List<Long>> dischargeTimesByColor = new HashMap<>();
-    private static Map<String, Label> avgTimeLabels = new HashMap<>();
 
     // Aggiungi in cima alle variabili statiche:
     private static Map<String, Label> colorCountLabels = new HashMap<>();
@@ -89,21 +84,28 @@ public class GuiManager {
         createLowButton.setStyle(
                 "-fx-font-size: 12; -fx-padding: 10; -fx-background-color: #228B22; -fx-text-fill: white; -fx-cursor: hand;");
         createLowButton.setOnAction(
-                e -> it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.LOW));
+                e -> {
+                    int count = Integer.parseInt(patientCountField.getText());
+                    it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.LOW, count);
+                });
 
         Button createMediumButton = new Button("Create Medium");
         createMediumButton.setPrefWidth(120);
         createMediumButton.setStyle(
                 "-fx-font-size: 12; -fx-padding: 10; -fx-background-color: #FF8C00; -fx-text-fill: white; -fx-cursor: hand;");
-        createMediumButton.setOnAction(e -> it.unige.dibris.mas.Main
-                .createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.MEDIUM));
+        createMediumButton.setOnAction(e -> {
+            int count = Integer.parseInt(patientCountField.getText());
+            it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.MEDIUM, count);
+        });
 
         Button createHighButton = new Button("Create High");
         createHighButton.setPrefWidth(120);
         createHighButton.setStyle(
                 "-fx-font-size: 12; -fx-padding: 10; -fx-background-color: #DC143C; -fx-text-fill: white; -fx-cursor: hand;");
-        createHighButton.setOnAction(e -> it.unige.dibris.mas.Main
-                .createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.HIGH));
+        createHighButton.setOnAction(e -> {
+            int count = Integer.parseInt(patientCountField.getText());
+            it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.HIGH, count);
+        });
 
         Button quitButton = new Button("Quit");
         quitButton.setPrefWidth(100);
@@ -129,7 +131,7 @@ public class GuiManager {
         logBox.setPadding(new Insets(10));
         logBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
         logBox.getChildren().addAll(
-                new Label("📋 ED Simulation Log"),
+                new Label("ED Simulation Log"),
                 scrollPane,
                 inputBox);
 
@@ -157,7 +159,7 @@ public class GuiManager {
         triageBox.setPadding(new Insets(10));
         triageBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
         triageBox.getChildren().addAll(
-                new Label("⏳ Triage Queue"),
+                new Label("Triage Queue"),
                 waitingTriageListView);
 
         // Priority Queue
@@ -200,7 +202,7 @@ public class GuiManager {
         priorityBox.setPadding(new Insets(10));
         priorityBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
         priorityBox.getChildren().addAll(
-                new Label("🏥 Waiting List"),
+                new Label("Waiting List"),
                 queueListView);
 
         // Doctor Status (verticale, box-based)
@@ -220,13 +222,13 @@ public class GuiManager {
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        Tab tab1 = new Tab("Conteggio", createColorCountView());
-        Tab tab2 = new Tab("Tempo Dimissione", createLineChartView());
+        Tab tab1 = new Tab("Color Count", createColorCountView());
+        Tab tab2 = new Tab("Discharge Time", createLineChartView());
 
         tabPane.getTabs().addAll(tab1, tab2);
 
         chartBox.getChildren().addAll(
-                new Label("📊 Grafici"),
+                new Label("Charts"),
                 tabPane);
 
         // ========== BLOCCO (1,1) - BED MANAGEMENT ==========
@@ -261,7 +263,7 @@ public class GuiManager {
         bedsContainer.setPadding(new Insets(10));
         bedsContainer.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
         bedsContainer.getChildren().addAll(
-                new Label("🛏️ Bed Management"),
+                new Label("Bed Management"),
                 new Separator(),
                 bedsScrollPane);
 
@@ -316,7 +318,7 @@ public class GuiManager {
         doctorsBox.setPadding(new Insets(10));
         doctorsBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
 
-        Label title = new Label("👨‍⚕️ Doctors Status");
+        Label title = new Label("Doctors Status");
         doctorsBox.getChildren().add(title);
 
         // ← CREA UN VBOX PER I DOTTORI:
@@ -585,7 +587,7 @@ public class GuiManager {
     }
 
     private static void quitApplication() {
-        SimulationLogger.getInstance().log("🛑 Shutting down JADE...");
+        SimulationLogger.getInstance().log("Shutting down JADE...");
         new Thread(() -> {
             try {
                 Thread.sleep(500);
@@ -705,9 +707,6 @@ public class GuiManager {
         patientCountField = field;
     }
 
-    public static void setContainerController(ContainerController cont) {
-        container = cont;
-    }
 
     public static void setPatientCounter(int counter) {
         patientCounter = counter;

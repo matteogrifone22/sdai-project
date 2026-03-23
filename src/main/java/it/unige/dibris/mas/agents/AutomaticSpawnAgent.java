@@ -10,8 +10,6 @@ public class AutomaticSpawnAgent extends Agent {
         SimulationLogger.getInstance().log("[AutomaticSpawnAgent] Automatic Patient Spawn started");
         
         addBehaviour(new SpawnPatientsBehaviour(this));
-        
-        // NON chiamare agentReady() - questo agente non è conteggiato nell'init
     }
     
     protected void takeDown() {

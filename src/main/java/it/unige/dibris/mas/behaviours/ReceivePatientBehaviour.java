@@ -26,11 +26,9 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
     private Long patientArrivalTime = null;
     private PatientQueueEntry currentPatientEntry = null;
 
-    public ReceivePatientBehaviour(Agent agent, QueueManagerAgent queueManager, BedManagerAgent bedManager,
-            long treatmentDuration) {
+    public ReceivePatientBehaviour(Agent agent, QueueManagerAgent queueManager, BedManagerAgent bedManager) {
         this.queueManager = queueManager;
         this.bedManager = bedManager;
-        this.TREATMENT_DURATION = treatmentDuration;
     }
 
     @Override
@@ -52,6 +50,7 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 this.entryColor = entryColor;
                 this.patientArrivalTime = ArrivalTime;
                 this.currentPatientEntry = queueEntry;
+                this.TREATMENT_DURATION = calculateTreatmentDuration(currentColor);
 
                 // ← NUOVO: Controlla se il paziente era a letto
                 Integer bedId = bedManager.getPatientBedId(patientId);
@@ -151,6 +150,25 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private long calculateTreatmentDuration(TriageColor color) {
+        Random rand = new Random();
+
+        switch (color) {
+            case WHITE:
+                return (10 + rand.nextInt(16)) * 1000; // 10-25 secondi
+            case BLUE:
+                return (15 + rand.nextInt(16)) * 1000; // 15-30 secondi
+            case GREEN:
+                return (25 + rand.nextInt(16)) * 1000; // 25-40 secondi
+            case ORANGE:
+                return (35 + rand.nextInt(16)) * 1000; // 35-50 secondi
+            case RED:
+                return (45 + rand.nextInt(16)) * 1000; // 45-60 secondi
+            default:
+                return 20000; // Default 20 secondi
         }
     }
 

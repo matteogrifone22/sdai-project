@@ -1,6 +1,5 @@
 package it.unige.dibris.mas.gui;
 
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -79,7 +78,7 @@ public class ConfigurationGui {
 
             // Validazione
             if (nurses > beds) {
-                validationLabel.setText("⚠️ Nurses cannot exceed number of beds!");
+                validationLabel.setText("ERROR: Nurses cannot exceed number of beds!");
                 return;
             }
 

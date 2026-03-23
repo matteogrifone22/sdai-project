@@ -49,16 +49,23 @@ public class Main extends Application {
 
                 SimulationLogger.getInstance().log("JADE container started!");
 
+                // ← SPOSTA QUI: Crea il latch PRIMA di initializeED
+                int totalBeds = ConfigurationGui.getNumBeds();
+                int numDoctors = ConfigurationGui.getNumDoctors();
+                int numNurses = ConfigurationGui.getNumNurses();
+
+                int totalAgents = 4 + numDoctors + numNurses;
+                edInitLatch = new CountDownLatch(totalAgents);
+
                 // Inizialize ED in un thread separato
                 Thread edInitThread = new Thread(() -> {
-                    initializeED();
+                    initializeED(totalBeds, numDoctors, numNurses);
                 });
                 edInitThread.setDaemon(false);
                 edInitThread.start();
 
                 try {
                     edInitLatch.await();
-                    SimulationLogger.getInstance().log("ED initialized! All ED Agents have been created");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -74,8 +81,7 @@ public class Main extends Application {
                 createGUI(edStage,
                         ConfigurationGui.getNumBeds(),
                         ConfigurationGui.getNumDoctors(),
-                        ConfigurationGui.getNumNurses()
-                ); // Passa la nuova Stage
+                        ConfigurationGui.getNumNurses()); // Passa la nuova Stage
             });
         });
     }
@@ -108,13 +114,11 @@ public class Main extends Application {
         });
     }
 
-    public static void createMultiplePatients(PatientSeverity severity) {
+    public static void createMultiplePatients(PatientSeverity severity, int count) {
         try {
-            String countText = GuiManager.getPatientCountFieldText();
 
-            int count = Integer.parseInt(countText);
             if (count <= 0) {
-                SimulationLogger.getInstance().log("⚠️ Please enter a positive number");
+                SimulationLogger.getInstance().log("ERROR: Please enter a positive number");
                 return;
             }
 
@@ -132,7 +136,7 @@ public class Main extends Application {
             patientCountField.setText("1");
 
         } catch (NumberFormatException e) {
-            SimulationLogger.getInstance().log("⚠️ ERROR: Invalid number");
+            SimulationLogger.getInstance().log("ERROR: Invalid number");
         }
     }
 
@@ -150,7 +154,7 @@ public class Main extends Application {
                     args);
 
             agentController.start();
-            SimulationLogger.getInstance().log("✨ Created: " + patientName + " (" + severity.getLabel() + ")");
+            SimulationLogger.getInstance().log("Created: " + patientName + " (" + severity.getLabel() + ")");
 
         } catch (Exception e) {
             SimulationLogger.getInstance().log("ERROR: " + e.getMessage());
@@ -162,18 +166,9 @@ public class Main extends Application {
     public static QueueManagerAgent sharedQueueManager = null;
     public static BedManagerAgent sharedBedManager = null;
 
-    private void initializeED() {
+    private void initializeED(int totalBeds, int numDoctors, int numNurses) {
         try {
             // Leggi dalla configurazione
-            int totalBeds = ConfigurationGui.getNumBeds();
-            int numDoctors = ConfigurationGui.getNumDoctors();
-            int numNurses = ConfigurationGui.getNumNurses();
-
-            // ← AGGIUNGI QUI: Calcola il numero totale di agenti
-            // Registration, Triage, QueueManager, BedManager, AutomaticSpawn + Doctors +
-            // Nurses
-            int totalAgents = 5 + numDoctors + numNurses;
-            edInitLatch = new CountDownLatch(totalAgents);
 
             AgentController regAgentController = container.createNewAgent(
                     "RegistrationAgent",

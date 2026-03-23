@@ -5,7 +5,6 @@ import jade.core.behaviours.TickerBehaviour;
 import it.unige.dibris.mas.agents.BedManagerAgent;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.BedInfo;
-import it.unige.dibris.mas.ontology.TriageColor;
 
 public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
 

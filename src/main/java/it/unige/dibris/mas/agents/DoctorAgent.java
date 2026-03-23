@@ -8,7 +8,6 @@ import jade.core.Agent;
 public class DoctorAgent extends Agent {
 
     private String currentPatientId;
-    private static final long TREATMENT_DURATION = 20000;
 
 
     protected void setup() {
@@ -17,7 +16,7 @@ public class DoctorAgent extends Agent {
         Main.updateDoctorStatus(getLocalName(), "FREE");
 
         // Aggiungi comportamenti per gestire i pazienti (da implementare)
-        addBehaviour(new ReceivePatientBehaviour(this, Main.sharedQueueManager, Main.sharedBedManager, TREATMENT_DURATION));
+        addBehaviour(new ReceivePatientBehaviour(this, Main.sharedQueueManager, Main.sharedBedManager));
         Main.agentReady();
     }
 
