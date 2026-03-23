@@ -11,12 +11,13 @@ import javafx.stage.Stage;
 public class ConfigurationGui {
 
     private static int numDoctors = 2;
-    private static int numNurses = 2;
-    private static int numBeds = 5;
+    private static int numNurses = 3;
+    private static int numBeds = 6;
+    private static int numAmbulances = 2;
     private static boolean configDone = false;
 
     public static void showConfigurationDialog(Stage primaryStage, Runnable onConfigComplete) {
-        VBox root = new VBox(15);
+        VBox root = new VBox(10);
         root.setPadding(new Insets(30));
         root.setAlignment(Pos.CENTER);
         root.setStyle("-fx-background-color: #f5f5f5;");
@@ -39,7 +40,7 @@ public class ConfigurationGui {
         bedsBox.setAlignment(Pos.CENTER_LEFT);
         Label bedsLabel = new Label("Number of Beds:");
         bedsLabel.setPrefWidth(150);
-        Spinner<Integer> bedsSpinner = new Spinner<>(1, 20, 5);
+        Spinner<Integer> bedsSpinner = new Spinner<>(1, 30, 5);
         bedsSpinner.setPrefWidth(100);
         bedsBox.getChildren().addAll(bedsLabel, bedsSpinner);
 
@@ -48,9 +49,18 @@ public class ConfigurationGui {
         nursesBox.setAlignment(Pos.CENTER_LEFT);
         Label nursesLabel = new Label("Number of Nurses:");
         nursesLabel.setPrefWidth(150);
-        Spinner<Integer> nursesSpinner = new Spinner<>(1, 10, 2);
+        Spinner<Integer> nursesSpinner = new Spinner<>(1, 10, 3);
         nursesSpinner.setPrefWidth(100);
         nursesBox.getChildren().addAll(nursesLabel, nursesSpinner);
+
+        // Numero Ambulanze
+        HBox ambulancesBox = new HBox(10);
+        ambulancesBox.setAlignment(Pos.CENTER_LEFT);
+        Label ambulancesLabel = new Label("Number of Ambulances:");
+        ambulancesLabel.setPrefWidth(150);
+        Spinner<Integer> ambulancesSpinner = new Spinner<>(0, 10, 2);
+        ambulancesSpinner.setPrefWidth(100);
+        ambulancesBox.getChildren().addAll(ambulancesLabel, ambulancesSpinner);
 
         // Label di validazione
         Label validationLabel = new Label("");
@@ -86,6 +96,7 @@ public class ConfigurationGui {
             numDoctors = doctors;
             numNurses = nurses;
             numBeds = beds;
+            numAmbulances = ambulancesSpinner.getValue();
             configDone = true;
 
             SimulationLogger.getInstance()
@@ -105,6 +116,7 @@ public class ConfigurationGui {
                 doctorsBox,
                 bedsBox,
                 nursesBox,
+                ambulancesBox,
                 validationLabel,
                 new Separator(),
                 startButton);
@@ -127,6 +139,10 @@ public class ConfigurationGui {
 
     public static int getNumBeds() {
         return numBeds;
+    }
+
+    public static int getNumAmbulances() {
+        return numAmbulances;
     }
 
     public static boolean isConfigDone() {

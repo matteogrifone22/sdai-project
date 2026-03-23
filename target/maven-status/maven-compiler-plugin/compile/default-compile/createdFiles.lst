@@ -9,6 +9,7 @@ it\unige\dibris\mas\behaviours\ReceiveAndQueueBehaviour.class
 it\unige\dibris\mas\agents\QueueManagerAgent.class
 it\unige\dibris\mas\gui\GuiManager$2.class
 it\unige\dibris\mas\behaviours\ReceivePatientBehaviour$1.class
+it\unige\dibris\mas\agents\AmbulanceAgent.class
 it\unige\dibris\mas\behaviours\ReceiveFromRegistrationBehaviour.class
 it\unige\dibris\mas\ontology\PatientSeverity.class
 it\unige\dibris\mas\behaviours\ProcessTriageQueueBehaviour$1.class

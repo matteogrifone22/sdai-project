@@ -13,20 +13,20 @@ public class ReceiveFromRegistrationBehaviour extends CyclicBehaviour {
     public void action() {
         ACLMessage msg = myAgent.receive();
 
-        if (msg != null && msg.getSender().getLocalName().equals("RegistrationAgent")) {
-            String content = msg.getContent();
-            String[] parts = content.split("\\|");
-            if (parts.length >= 2 && parts[0].equals("PATIENT_REGISTERED")) {
-                String patientId = parts[1];
-                PatientSeverity severity = parts.length > 2 ? PatientSeverity.valueOf(parts[2]) : PatientSeverity.MEDIUM;
-                TriageAgent triageAgent = (TriageAgent) myAgent;
+        if (msg != null && msg.getContent().startsWith("PATIENT_REGISTERED")) {
+            // Funziona sia da RegistrationAgent che da PatientAgent
+            String[] parts = msg.getContent().split("\\|");
+            String patientId = parts[1];
+            PatientSeverity severity = PatientSeverity.valueOf(parts[2]);
 
-                triageAgent.addWaitingPatient(patientId, severity);
-                Main.updateWaitingForTriage(patientId, true);
+            TriageAgent triageAgent = (TriageAgent) myAgent;
 
-                SimulationLogger.getInstance().log("[TriageAgent] " + patientId + " waiting for triage. Queue: "
-                        + triageAgent.getWaitingPatients().size());
-            }
+            triageAgent.addWaitingPatient(patientId, severity);
+            Main.updateWaitingForTriage(patientId, true);
+
+            SimulationLogger.getInstance().log("[TriageAgent] " + patientId + " waiting for triage. Queue: "
+                    + triageAgent.getWaitingPatients().size());
+
         }
     }
 }

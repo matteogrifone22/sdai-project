@@ -22,4 +22,8 @@ Aggiungere titolo chart codici colori
 aggiungere delay 3/5 minuti per prendere nuovo paziente
 
 
+max 15min registration
+
+
+
 

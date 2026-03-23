@@ -86,7 +86,8 @@ public class GuiManager {
         createLowButton.setOnAction(
                 e -> {
                     int count = Integer.parseInt(patientCountField.getText());
-                    it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.LOW, count);
+                    it.unige.dibris.mas.Main.createMultiplePatients(it.unige.dibris.mas.ontology.PatientSeverity.LOW,
+                            count);
                 });
 
         Button createMediumButton = new Button("Create Medium");
@@ -224,8 +225,9 @@ public class GuiManager {
 
         Tab tab1 = new Tab("Color Count", createColorCountView());
         Tab tab2 = new Tab("Discharge Time", createLineChartView());
+        Tab tab3 = new Tab("Ambulanze", createAmbulancesStatusView());
 
-        tabPane.getTabs().addAll(tab1, tab2);
+        tabPane.getTabs().addAll(tab1, tab2, tab3);
 
         chartBox.getChildren().addAll(
                 new Label("Charts"),
@@ -309,6 +311,70 @@ public class GuiManager {
         primaryStage.show();
 
         SimulationLogger.getInstance().log("GUI Ready! You can now create patients.");
+    }
+
+    private static Map<Integer, Label> ambulanceStatusLabels = new HashMap<>();
+
+    private static VBox createAmbulancesStatusView() {
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(20));
+        container.setAlignment(Pos.TOP_CENTER);
+
+        Label titleLabel = new Label("Ambulances Status");
+        titleLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+
+        VBox ambulancesBox = new VBox(10);
+        ambulancesBox.setPadding(new Insets(10));
+
+        // Crea una label per ogni ambulanza (dinamico)
+        int numAmbulances = it.unige.dibris.mas.Main.sharedAmbulances.size();
+        for (int i = 1; i <= numAmbulances; i++) {
+            VBox ambulanceBox = createAmbulanceBox(i);
+            ambulancesBox.getChildren().add(ambulanceBox);
+        }
+
+        ScrollPane scrollPane = new ScrollPane(ambulancesBox);
+        scrollPane.setFitToWidth(true);
+
+        container.getChildren().addAll(titleLabel, scrollPane);
+        return container;
+    }
+
+    private static VBox createAmbulanceBox(int ambulanceId) {
+        VBox box = new VBox(5);
+        box.setPadding(new Insets(10));
+        box.setStyle("-fx-border-color: #228B22; -fx-border-width: 2; -fx-background-color: white;");
+        box.setAlignment(Pos.CENTER);
+
+        Label nameLabel = new Label("Ambulance_" + ambulanceId);
+        nameLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+
+        Label statusLabel = new Label("Free");
+        statusLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #228B22; -fx-font-weight: bold;");
+        statusLabel.setAlignment(Pos.CENTER);
+        statusLabel.setMaxWidth(Double.MAX_VALUE);
+
+        box.getChildren().addAll(nameLabel, statusLabel);
+
+        // Salva il riferimento per aggiornamenti
+        ambulanceStatusLabels.put(ambulanceId, statusLabel);
+
+        return box;
+    }
+
+    public static void updateAmbulanceStatus(int ambulanceId, boolean isAvailable) {
+        Platform.runLater(() -> {
+            Label label = ambulanceStatusLabels.get(ambulanceId);
+            if (label != null) {
+                if (isAvailable) {
+                    label.setText("Free");
+                    label.setStyle("-fx-font-size: 12; -fx-text-fill: #228B22; -fx-font-weight: bold;");
+                } else {
+                    label.setText("In Service");
+                    label.setStyle("-fx-font-size: 12; -fx-text-fill: #DC143C; -fx-font-weight: bold;");
+                }
+            }
+        });
     }
 
     // ========== METODI HELPER ==========
@@ -707,7 +773,6 @@ public class GuiManager {
         patientCountField = field;
     }
 
-
     public static void setPatientCounter(int counter) {
         patientCounter = counter;
     }
@@ -762,15 +827,36 @@ public class GuiManager {
         barChart = new javafx.scene.chart.BarChart<>(xAxis, yAxis);
         barChart.setTitle("Average Discharge Time by Entry Color");
         barChart.setPrefHeight(400);
+        barChart.setLegendVisible(false); // ← RIMUOVI LA LEGGENDA
 
         barChartSeries = new javafx.scene.chart.XYChart.Series<>();
         barChartSeries.setName("Avg Time");
 
         for (TriageColor color : TriageColor.values()) {
-            barChartSeries.getData().add(new javafx.scene.chart.XYChart.Data<>(color.getLabel(), 0));
+            javafx.scene.chart.XYChart.Data<String, Number> data = new javafx.scene.chart.XYChart.Data<>(
+                    color.getLabel(), 0);
+            barChartSeries.getData().add(data);
         }
 
         barChart.getData().add(barChartSeries);
+        barChart.setStyle("-fx-bar-fill: #FF0000;");
+        // ← AGGIUNGI: Mostra il tempo sopra ogni barra
+        for (javafx.scene.chart.XYChart.Data<String, Number> data : barChartSeries.getData()) {
+            data.nodeProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    long seconds = data.getYValue().longValue();
+                    long minutes = seconds / 2;
+
+                    String label = seconds + "s (" + minutes + " min)";
+                    javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip(label);
+                    javafx.scene.control.Tooltip.install(newValue, tooltip);
+
+                    // Colora la barra
+                    String hexColor = getHexColorForChart(TriageColor.valueOf(data.getXValue().toUpperCase()));
+                    newValue.setStyle("-fx-bar-fill: " + hexColor + ";");
+                }
+            });
+        }
         container.getChildren().add(barChart);
         return container;
     }
@@ -793,24 +879,28 @@ public class GuiManager {
     }
 
     private static void updateBarChart() {
-        if (barChartSeries == null) {
-            SimulationLogger.getInstance().log("[BarChart ERROR] barChartSeries is null!");
+        if (barChartSeries == null)
             return;
-        }
 
-        // Aggiorna tutti i dati del grafico
         for (javafx.scene.chart.XYChart.Data<String, Number> data : barChartSeries.getData()) {
-            String colorLabel = data.getXValue(); // Es. "Red", "Orange", ecc
-
-            // Cerca nella mappa con il nome uppercase (RED, ORANGE, ecc)
-            String colorUppercase = colorLabel.toUpperCase();
-            List<Long> times = dischargeTimesByColor.get(colorUppercase);
+            String colorLabel = data.getXValue();
+            List<Long> times = dischargeTimesByColor.get(colorLabel.toUpperCase());
 
             if (times != null && !times.isEmpty()) {
                 long avgTime = times.stream().mapToLong(Long::longValue).sum() / times.size();
                 data.setYValue(avgTime);
 
-                SimulationLogger.getInstance().log("[BarChart] Updated " + colorLabel + " → " + avgTime + "s avg");
+                // ← COLORA LA BARRA
+                String hexColor = getHexColorForChart(TriageColor.valueOf(colorLabel.toUpperCase()));
+                if (data.getNode() != null) {
+                    data.getNode().setStyle("-fx-bar-fill: " + hexColor + ";");
+
+                    // ← AGGIUNGI LABEL SOPRA LA BARRA
+                    long minutes = avgTime / 2;
+                    String label = avgTime + "s (" + minutes + " min)";
+                    javafx.scene.control.Label valueLabel = new javafx.scene.control.Label(label);
+                    valueLabel.setStyle("-fx-font-size: 10; -fx-font-weight: bold;");
+                }
             }
         }
     }

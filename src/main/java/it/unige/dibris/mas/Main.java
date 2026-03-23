@@ -8,6 +8,9 @@ import javafx.stage.Stage;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import jade.wrapper.ContainerController;
 import jade.wrapper.AgentController;
@@ -15,6 +18,7 @@ import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
 import it.unige.dibris.mas.agents.QueueManagerAgent;
+import it.unige.dibris.mas.agents.AmbulanceAgent;
 import it.unige.dibris.mas.agents.BedManagerAgent;
 import it.unige.dibris.mas.gui.ConfigurationGui;
 import it.unige.dibris.mas.gui.GuiManager;
@@ -23,8 +27,10 @@ import java.util.concurrent.CountDownLatch;
 
 public class Main extends Application {
 
+    public static List<AmbulanceAgent> sharedAmbulances = new ArrayList<>();
+
     private static ContainerController container;
-    private static int patientCounter = 0;
+    public static int patientCounter = 0;
     private static CountDownLatch edInitLatch; // 5 ED Agents: Registration, Triage,
                                                // QueueManager, Doctor_1, Doctor_2
 
@@ -53,13 +59,14 @@ public class Main extends Application {
                 int totalBeds = ConfigurationGui.getNumBeds();
                 int numDoctors = ConfigurationGui.getNumDoctors();
                 int numNurses = ConfigurationGui.getNumNurses();
+                int numAmbulances = ConfigurationGui.getNumAmbulances();
 
-                int totalAgents = 4 + numDoctors + numNurses;
+                int totalAgents = 4 + numDoctors + numNurses + numAmbulances;
                 edInitLatch = new CountDownLatch(totalAgents);
 
                 // Inizialize ED in un thread separato
                 Thread edInitThread = new Thread(() -> {
-                    initializeED(totalBeds, numDoctors, numNurses);
+                    initializeED(totalBeds, numDoctors, numNurses, numAmbulances);
                 });
                 edInitThread.setDaemon(false);
                 edInitThread.start();
@@ -125,13 +132,13 @@ public class Main extends Application {
             new Thread(() -> {
                 for (int i = 0; i < count; i++) {
                     try {
-                        createPatient(severity);
+                        createPatient(severity, false);
                         Thread.sleep(100); // Delay tra creazioni
                     } catch (Exception e) {
                         SimulationLogger.getInstance().log("ERROR: " + e.getMessage());
                     }
                 }
-                SimulationLogger.getInstance().log("✅ Created " + count + " patients");
+                SimulationLogger.getInstance().log("Created " + count + " patients");
             }).start();
             patientCountField.setText("1");
 
@@ -140,13 +147,13 @@ public class Main extends Application {
         }
     }
 
-    public static void createPatient(PatientSeverity severity) {
+    public static void createPatient(PatientSeverity severity, boolean arrivedByAmbulance) {
         try {
             patientCounter++;
             String patientName = "Patient_" + patientCounter;
 
-            // Passa la severity come argomento
-            Object[] args = new Object[] { severity.name() };
+            // Passa la severity e l'informazione sull'arrivo dell'ambulanza come argomenti
+            Object[] args = new Object[] { severity.name(), arrivedByAmbulance };
 
             AgentController agentController = container.createNewAgent(
                     patientName,
@@ -166,7 +173,7 @@ public class Main extends Application {
     public static QueueManagerAgent sharedQueueManager = null;
     public static BedManagerAgent sharedBedManager = null;
 
-    private void initializeED(int totalBeds, int numDoctors, int numNurses) {
+    private void initializeED(int totalBeds, int numDoctors, int numNurses, int numAmbulances) {
         try {
             // Leggi dalla configurazione
 
@@ -228,6 +235,12 @@ public class Main extends Application {
                         doctorArgs);
                 doctorController.start();
             }
+            // Crea le ambulanze
+            for (int i = 1; i <= numAmbulances; i++) {
+                container.createNewAgent("Ambulance_" + i, 
+                    "it.unige.dibris.mas.agents.AmbulanceAgent", 
+                    null).start();
+            }
 
             AgentController spawnAgentController = container.createNewAgent(
                     "AutomaticSpawnAgent",
@@ -279,10 +292,11 @@ public class Main extends Application {
         edInitLatch.countDown();
     }
 
-    public static void createPatientFromSpawn(PatientSeverity severity) {
+    public static void createPatientFromSpawn(PatientSeverity severity, boolean arrivedByAmbulance) {
         new Thread(() -> {
             try {
-                createPatient(severity);
+
+                createPatient(severity, arrivedByAmbulance);
             } catch (Exception e) {
                 SimulationLogger.getInstance().log("ERROR: " + e.getMessage());
             }
@@ -299,5 +313,9 @@ public class Main extends Application {
 
     public static void updateDischargeStats(String name, long l) {
         GuiManager.updateDischargeStats(name, l);
+    }
+
+    public static void updateAmbulanceStatus(int ambulanceId, boolean available) {
+        GuiManager.updateAmbulanceStatus(ambulanceId, available);
     }
 }

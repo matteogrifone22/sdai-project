@@ -16,6 +16,7 @@ public class PatientAgent extends Agent {
     private TriageColor entryColor;
     private TriageColor color;
     private long arrivalTime;
+    private boolean arrivedByAmbulance = false;
 
     protected void setup() {
         // Ricevi il nome dal container
@@ -23,6 +24,7 @@ public class PatientAgent extends Agent {
         this.entryColor = null;
         this.color = null;
         this.isRegistered = false;
+
 
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
@@ -35,6 +37,9 @@ public class PatientAgent extends Agent {
         } else {
             this.severity = PatientSeverity.MEDIUM; // Default
         }
+        this.arrivedByAmbulance = (args != null && args.length > 1) ? (Boolean) args[1] : false;
+        this.isRegistered = this.arrivedByAmbulance; // Se arriva con ambulanza, è già registrato
+
         try {
             Thread.sleep(1000); // ← Delay di 1 secondo prima di iniziare
             this.arrivalTime = System.currentTimeMillis();
@@ -53,6 +58,14 @@ public class PatientAgent extends Agent {
 
     protected void takeDown() {
         SimulationLogger.getInstance().log("[" + patientId + "] Patient discharged");
+    }
+
+    public boolean isArrivedByAmbulance() {
+        return arrivedByAmbulance;
+    }
+
+    public void setArrivedByAmbulance(boolean arrivedByAmbulance) {
+        this.arrivedByAmbulance = arrivedByAmbulance;
     }
 
     // Getter
