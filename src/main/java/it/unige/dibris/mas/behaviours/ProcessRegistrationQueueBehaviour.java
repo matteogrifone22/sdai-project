@@ -10,6 +10,8 @@ import java.util.Queue;
 import java.util.Map;
 
 public class ProcessRegistrationQueueBehaviour extends ProcessQueueBehaviour {
+
+    // This behaviour processes the registration queue, registers patients, and sends them to triage
     
 
     public ProcessRegistrationQueueBehaviour(RegistrationAgent agent, long processingTime) {
@@ -24,7 +26,7 @@ public class ProcessRegistrationQueueBehaviour extends ProcessQueueBehaviour {
         SimulationLogger.getInstance().log("[RegistrationAgent] Registered: " + patientId);
         SimulationLogger.getInstance().log("[RegistrationAgent] Queue size: " + regAgent.getPatientQueue().size());
 
-        // Risposta al Patient
+        // Reply to the original sender to confirm registration
         ACLMessage reply = originalMsg.createReply();
         reply.setContent("REGISTERED");
         myAgent.send(reply);
@@ -33,10 +35,10 @@ public class ProcessRegistrationQueueBehaviour extends ProcessQueueBehaviour {
         String[] parts = content.split("\\|");
         PatientSeverity severity = parts.length > 1 ? PatientSeverity.valueOf(parts[1]) : PatientSeverity.MEDIUM;
 
-        // Invia al TriageAgent CON la severity
+        // Send to triage agent with the patient ID and severity
         ACLMessage triageMsg = new ACLMessage(ACLMessage.INFORM);
         triageMsg.addReceiver(new AID("TriageAgent", AID.ISLOCALNAME));
-        triageMsg.setContent("PATIENT_REGISTERED|" + patientId + "|" + severity); // ← AGGIUNGI "PATIENT_REGISTERED|"
+        triageMsg.setContent("PATIENT_REGISTERED|" + patientId + "|" + severity);
         myAgent.send(triageMsg);
 
         SimulationLogger.getInstance().log("[RegistrationAgent] Sent " + patientId + " to Triage");

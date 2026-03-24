@@ -31,9 +31,7 @@ public class Main extends Application {
 
     private static ContainerController container;
     public static int patientCounter = 0;
-    private static CountDownLatch edInitLatch; // 5 ED Agents: Registration, Triage,
-                                               // QueueManager, Doctor_1, Doctor_2
-
+    private static CountDownLatch edInitLatch; // Latch to synchronize ED initialization
     private static TextField patientCountField;
 
     public static void main(String[] args) {
@@ -42,9 +40,9 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Mostra la configurazione GUI
+        // Show the configuration dialog first
         ConfigurationGui.showConfigurationDialog(primaryStage, () -> {
-            // Quando la configurazione è completata, continua
+        
             try {
                 Profile profile = new ProfileImpl();
                 profile.setParameter(Profile.MAIN_HOST, "localhost");
@@ -55,7 +53,6 @@ public class Main extends Application {
 
                 SimulationLogger.getInstance().log("JADE container started!");
 
-                // ← SPOSTA QUI: Crea il latch PRIMA di initializeED
                 int totalBeds = ConfigurationGui.getNumBeds();
                 int numDoctors = ConfigurationGui.getNumDoctors();
                 int numNurses = ConfigurationGui.getNumNurses();
@@ -64,7 +61,6 @@ public class Main extends Application {
                 int totalAgents = 4 + numDoctors + numNurses + numAmbulances;
                 edInitLatch = new CountDownLatch(totalAgents);
 
-                // Inizialize ED in un thread separato
                 Thread edInitThread = new Thread(() -> {
                     initializeED(totalBeds, numDoctors, numNurses, numAmbulances);
                 });
@@ -81,14 +77,13 @@ public class Main extends Application {
                 e.printStackTrace();
             }
 
-            // ← CAMBIA QUI:
             Platform.runLater(() -> {
                 Stage edStage = new Stage();
                 edStage.setTitle("ED Multi-Agent System Simulation");
                 createGUI(edStage,
                         ConfigurationGui.getNumBeds(),
                         ConfigurationGui.getNumDoctors(),
-                        ConfigurationGui.getNumNurses()); // Passa la nuova Stage
+                        ConfigurationGui.getNumNurses()); 
             });
         });
     }
@@ -109,12 +104,10 @@ public class Main extends Application {
                 String entry = doctorName + ": " + patientId;
 
                 if (isTreating) {
-                    // Aggiungi il paziente
                     if (!patientsInTreatment.contains(entry)) {
                         patientsInTreatment.add(entry);
                     }
                 } else {
-                    // Rimuovi il paziente
                     patientsInTreatment.remove(entry);
                 }
             }
@@ -133,7 +126,7 @@ public class Main extends Application {
                 for (int i = 0; i < count; i++) {
                     try {
                         createPatient(severity, false);
-                        Thread.sleep(100); // Delay tra creazioni
+                        Thread.sleep(100); 
                     } catch (Exception e) {
                         SimulationLogger.getInstance().log("ERROR: " + e.getMessage());
                     }
@@ -152,7 +145,6 @@ public class Main extends Application {
             patientCounter++;
             String patientName = "Patient_" + patientCounter;
 
-            // Passa la severity e l'informazione sull'arrivo dell'ambulanza come argomenti
             Object[] args = new Object[] { severity.name(), arrivedByAmbulance };
 
             AgentController agentController = container.createNewAgent(
@@ -169,13 +161,11 @@ public class Main extends Application {
         }
     }
 
-    // Nel Main.java, aggiungi una variabile statica
     public static QueueManagerAgent sharedQueueManager = null;
     public static BedManagerAgent sharedBedManager = null;
 
     private void initializeED(int totalBeds, int numDoctors, int numNurses, int numAmbulances) {
         try {
-            // Leggi dalla configurazione
 
             AgentController regAgentController = container.createNewAgent(
                     "RegistrationAgent",
@@ -183,14 +173,12 @@ public class Main extends Application {
                     null);
             regAgentController.start();
 
-            // Crea il QueueManagerAgent
             AgentController queueManagerAgentController = container.createNewAgent(
                     "QueueManagerAgent",
                     "it.unige.dibris.mas.agents.QueueManagerAgent",
                     null);
             queueManagerAgentController.start();
 
-            // Aspetta che sia inizializzato
             Thread.sleep(1000);
 
             Object[] triageArgs = new Object[] { Main.sharedQueueManager };
@@ -199,7 +187,6 @@ public class Main extends Application {
                     "it.unige.dibris.mas.agents.TriageAgent",
                     triageArgs);
             triageAgentController.start();
-            // Crea il BedManagerAgent
             AgentController bedManagerAgentController = container.createNewAgent(
                     "BedManagerAgent",
                     "it.unige.dibris.mas.agents.BedManagerAgent",
@@ -208,7 +195,6 @@ public class Main extends Application {
 
             Thread.sleep(1000);
 
-            // Crea le Nurse (5 letti / 2 = 2-3 nurse)
             int bedsPerNurse = (int) Math.ceil((double) totalBeds / numNurses);
 
             for (int i = 1; i <= numNurses; i++) {
@@ -226,7 +212,6 @@ public class Main extends Application {
                         .log("[Main] Created " + "Nurse_" + i + " (beds " + startBed + "-" + endBed + ")");
             }
 
-            // Crea i DoctorAgent
             for (int i = 1; i <= numDoctors; i++) {
                 Object[] doctorArgs = new Object[] { Main.sharedQueueManager, Main.sharedBedManager };
                 AgentController doctorController = container.createNewAgent(
@@ -235,7 +220,6 @@ public class Main extends Application {
                         doctorArgs);
                 doctorController.start();
             }
-            // Crea le ambulanze
             for (int i = 1; i <= numAmbulances; i++) {
                 container.createNewAgent("Ambulance_" + i, 
                     "it.unige.dibris.mas.agents.AmbulanceAgent", 
@@ -254,7 +238,6 @@ public class Main extends Application {
             e.printStackTrace();
         }
     }
-    // Cambia questi metodi nel Main:
 
     public static void setWaitingForTriageItems(ObservableList<String> items) {
         GuiManager.setWaitingForTriageItems(items);
@@ -317,5 +300,9 @@ public class Main extends Application {
 
     public static void updateAmbulanceStatus(int ambulanceId, boolean available) {
         GuiManager.updateAmbulanceStatus(ambulanceId, available);
+    }
+
+    public static int getTotalBeds() {
+        return ConfigurationGui.getNumBeds();
     }
 }

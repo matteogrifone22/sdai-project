@@ -7,6 +7,8 @@ import it.unige.dibris.mas.ontology.TriageColor;
 import it.unige.dibris.mas.agents.PatientAgent;
 
 public class ReceiveTriageResultBehaviour extends CyclicBehaviour {
+
+    // This behaviour listens for "TRIAGE_RESULT" messages from the TriageAgent and updates the patient's triage color accordingly
     
     @Override
     public void action() {

@@ -1,6 +1,7 @@
 package it.unige.dibris.mas.agents;
 
 import jade.core.Agent;
+import it.unige.dibris.mas.Main;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.TriageColor;
 import java.util.HashMap;
@@ -11,16 +12,17 @@ import it.unige.dibris.mas.ontology.PatientQueueEntry;
 
 public class BedManagerAgent extends Agent {
 
-    private Map<Integer, BedInfo> beds = new HashMap<>();
-    private ReentrantReadWriteLock bedsLock = new ReentrantReadWriteLock();
-    private Map<String, Integer> patientToBedMap = new HashMap<>();
+    private Map<Integer, BedInfo> beds = new HashMap<>(); //Map of bed
+    private ReentrantReadWriteLock bedsLock = new ReentrantReadWriteLock(); //Lock for bed access
+    private Map<String, Integer> patientToBedMap = new HashMap<>(); //Map to track which patient is in which bed
 
-    private int totalBeds = 5;
+    private int totalBeds;
 
     protected void setup() {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Bed Manager Agent started");
 
-        // Inizializza i letti
+        // Innitialize beds
+        totalBeds = Main.getTotalBeds();
         for (int i = 1; i <= totalBeds; i++) {
             BedInfo bed = new BedInfo();
             bed.bedId = i;
@@ -28,19 +30,19 @@ public class BedManagerAgent extends Agent {
             beds.put(i, bed);
         }
 
-        it.unige.dibris.mas.Main.sharedBedManager = this; // ← SALVA RIFERIMENTO
-        it.unige.dibris.mas.Main.agentReady();
+        Main.sharedBedManager = this; // Let other agents access this instance
+        Main.agentReady();
     }
 
     protected void takeDown() {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Bed Manager Agent shutting down");
     }
 
-    // Thread-safe: ammetti paziente a un letto
+    // admit a patient to a bed, if no bed is available, discharge the best patient to make room
     public void admitPatient(String patientId, TriageColor color, PatientQueueEntry queueEntry) {
         bedsLock.writeLock().lock();
         try {
-            // Trova il primo letto libero
+            // find a free bed
             for (BedInfo bed : beds.values()) {
                 if (bed.patientId == null) {
                     bed.patientId = patientId;
@@ -49,8 +51,7 @@ public class BedManagerAgent extends Agent {
                     bed.queueEntry = queueEntry;  
 
                     patientToBedMap.put(patientId, bed.bedId);
-                    // ← NUOVO: Aggiorna la GUI
-                    it.unige.dibris.mas.Main.updateBedUI(bed.bedId, patientId, color.name(), bed.admissionTime);
+                    Main.updateBedUI(bed.bedId, patientId, color.name(), bed.admissionTime);
 
                     SimulationLogger.getInstance().log("[BedManager] " + patientId + " admitted to bed " + bed.bedId
                             + " (color: " + color.getLabel() + ")");
@@ -58,20 +59,27 @@ public class BedManagerAgent extends Agent {
                 }
             }
 
-            // Se nessun letto libero, dimetti il miglior paziente
+            // discharge the best patient to make room
             BedInfo bestBed = findBestPatientToDischarge();
             if (bestBed != null) {
                 SimulationLogger.getInstance().log("[BedManager] Discharging " + bestBed.patientId + " from bed "
                         + bestBed.bedId + " to make room");
 
-                // ← NUOVO: Aggiorna la GUI (letto diventa libero)
-                it.unige.dibris.mas.Main.updateBedUI(bestBed.bedId, null, null, 0);
+                String currentPatientId = bestBed.patientId;
+                TriageColor currentPatientColor = bestBed.color;
+                TriageColor entryColor = bestBed.queueEntry.entryColor;
+                Long patientArrivalTime = bestBed.queueEntry.arrivalTime;
+                Main.removePatientFromColorStats(currentPatientId, currentPatientColor.name()); 
+                Main.updateDischargeStats(entryColor.name(), (System.currentTimeMillis() - patientArrivalTime) / 1000);
+
+
+                Main.updateBedUI(bestBed.bedId, null, null, 0);
+
 
                 bestBed.patientId = null;
                 bestBed.color = null;
                 bestBed.admissionTime = 0;
 
-                // Riassegna il nuovo paziente
                 admitPatient(patientId, color, queueEntry);
             }
         } finally {
@@ -88,7 +96,7 @@ public class BedManagerAgent extends Agent {
         }
     }
 
-    // Trova il miglior paziente da dimettere (più sano + più tempo a letto)
+    // find the best patient to discharge based on color and admission time
     public BedInfo findBestPatientToDischarge() {
         BedInfo best = null;
 
@@ -103,21 +111,20 @@ public class BedManagerAgent extends Agent {
         return best;
     }
 
-    // Confronta due pazienti: vero se bed1 è migliore da dimettere di bed2
+    // compare two beds
     private boolean isBetterToDischarge(BedInfo bed1, BedInfo bed2) {
         int color1 = bed1.color.ordinal();
         int color2 = bed2.color.ordinal();
 
-        // Se colore diverso, dimetti il più sano (colore più basso)
+        // First look at color
         if (color1 != color2) {
             return color1 < color2;
         }
-
-        // Se colore uguale, dimetti chi è stato più tempo a letto
+        // If color is the same, look at admission time (discharge the one that has been admitted longer)
         return bed1.admissionTime < bed2.admissionTime;
     }
 
-    // Metodo per ottenere info di un letto specifico
+    
     public BedInfo getBedInfo(int bedId) {
     bedsLock.readLock().lock();
     try {
@@ -125,14 +132,14 @@ public class BedManagerAgent extends Agent {
         if (bed == null || bed.patientId == null) {
             return null;
         }
-        // ← COPIA ANCHE queueEntry
+        // Return a copy of the BedInfo to avoid exposing internal state
         return new BedInfo(bed.bedId, bed.patientId, bed.color, bed.admissionTime, bed.queueEntry);
     } finally {
         bedsLock.readLock().unlock();
     }
 }
 
-    // Metodo per dimettere un paziente da un letto specifico
+    // discharge a patient from a bed (called when a doctor takes a patient for treatment)
     public void dischargePatientFromBed(int bedId) {
         bedsLock.writeLock().lock();
         try {
@@ -140,7 +147,6 @@ public class BedManagerAgent extends Agent {
             if (bed != null && bed.patientId != null) {
                 SimulationLogger.getInstance().log("[BedManager] Discharging " + bed.patientId + " from bed " + bedId);
 
-                // ← NUOVO: Aggiorna la GUI (letto diventa libero)
                 it.unige.dibris.mas.Main.updateBedUI(bedId, null, null, 0);
 
                 bed.patientId = null;
@@ -152,7 +158,7 @@ public class BedManagerAgent extends Agent {
         }
     }
 
-    // Metodo per ottenere il QueueManager
+    // get the queue manager agent
     public QueueManagerAgent getQueueManager() {
         return it.unige.dibris.mas.Main.sharedQueueManager;
     }

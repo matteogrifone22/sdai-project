@@ -16,6 +16,10 @@ import java.util.Random;
 
 public class ReceivePatientBehaviour extends CyclicBehaviour {
 
+    // This behaviour is responsible for receiving patients from the queue manager,
+    // treating them, and then either discharging them or admitting them to a bed based on
+    // their improvement and some randomness for green/blue patients
+
     private long treatmentStartTime = 0;
     private long TREATMENT_DURATION = 20000;
     private QueueManagerAgent queueManager;
@@ -35,7 +39,7 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
     public void action() {
         DoctorAgent doctorAgent = (DoctorAgent) myAgent;
 
-        // Se il dottore non sta curando nessuno, prendi un paziente dalla coda
+        // if not treating anyone, get next patient from queue manager
         if (doctorAgent.getCurrentPatientId() == null) {
             Map.Entry<PatientQueueEntry, TriageColor> patientEntry = queueManager.getNextPatient();
 
@@ -52,11 +56,11 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 this.currentPatientEntry = queueEntry;
                 this.TREATMENT_DURATION = calculateTreatmentDuration(currentColor);
 
-                // ← NUOVO: Controlla se il paziente era a letto
+                // check if the patient was already in a bed (e.g., was waiting for treatment) and release it if so
                 Integer bedId = bedManager.getPatientBedId(patientId);
 
                 if (bedId != null) {
-                    // Era a letto → libera il letto ADESSO
+                    // free the bed before starting treatment
                     bedManager.dischargePatientFromBed(bedId);
                     SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Released bed " + bedId
                             + " (Patient_" + patientId + " entering treatment)");
@@ -71,7 +75,7 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                         + " (color: " + currentColor.getLabel() + ")");
             }
         } else {
-            // Se sta curando, controlla se è finito
+            // if treating a patient, check if treatment is done
             if (System.currentTimeMillis() - treatmentStartTime >= TREATMENT_DURATION) {
                 String patientId = doctorAgent.getCurrentPatientId();
                 TriageColor improvedColor = improvePatientColor(currentPatientColor);
@@ -82,11 +86,13 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 ACLMessage dischargeMsg = new ACLMessage(ACLMessage.INFORM);
                 dischargeMsg.addReceiver(new AID(patientId, AID.ISLOCALNAME));
                 dischargeMsg.setContent("DISCHARGE");
-                // White dimesso, Green e Blue hanno probabilità di essere dimessi o migliorare,
-                // gli altri migliorano sempre
+                
+                // White patients are always discharged
+                // Green patients have a 50% chance of being discharged, 50% chance of being admitted to bed 
+                // Blue patients have a 30% chance of being discharged, 70% chance of being admitted to bed
+                // Orange and Red patients are always admitted to bed (no improvement possible)
                 switch (improvedColor) {
                     case WHITE:
-                        // dimetti il paziente, rimuovilo dalle statistiche e non reinserirlo in coda
 
                         SimulationLogger.getInstance()
                                 .log("[" + myAgent.getLocalName() + "] " + patientId + " discharged (LOW severity)");
@@ -130,13 +136,12 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
 
                         } else {
                             bedManager.admitPatient(patientId, improvedColor, currentPatientEntry);
-                            Main.updatePatientColor(patientId, improvedColor.name()); // Aggiorna al nuovo
+                            Main.updatePatientColor(patientId, improvedColor.name()); 
                         }
                         break;
                     default:
                         bedManager.admitPatient(patientId, improvedColor, currentPatientEntry);
-                        Main.removePatientFromColorStats(patientId, currentPatientColor.name()); // Decrementa ilvecchio
-                        Main.updatePatientColor(patientId, improvedColor.name()); // Incrementa il nuovo
+                        Main.removePatientFromColorStats(patientId, currentPatientColor.name()); 
                 }
 
                 Main.updateDoctorStatus(myAgent.getLocalName(), "FREE");
@@ -145,7 +150,8 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
                 currentPatientColor = null;
 
                 try {
-                    Thread.sleep(6000); // 6 secondi (3 min reali)
+                    // quick pause before treating next patient to simulate time taken for doctor to be ready again
+                    Thread.sleep(5000); 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -156,34 +162,38 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
     private long calculateTreatmentDuration(TriageColor color) {
         Random rand = new Random();
 
+        // These durations are just examples and can be adjusted based on how you want the simulation to behave
+        // The doctor visit includes also the time taken for an exams (like blood test, x-ray, etc.) 
+        // which is why the time are increasing with the severity of the patient.
+        // I assume higher color patients generally require more exams and more time for treatment
         switch (color) {
             case WHITE:
-                return (10 + rand.nextInt(16)) * 1000; // 10-25 secondi
+                return (10 + rand.nextInt(16)) * 1000; // 10-25 sec
             case BLUE:
-                return (15 + rand.nextInt(16)) * 1000; // 15-30 secondi
+                return (15 + rand.nextInt(16)) * 1000; // 15-30 sec
             case GREEN:
-                return (25 + rand.nextInt(16)) * 1000; // 25-40 secondi
+                return (25 + rand.nextInt(16)) * 1000; // 25-40 sec
             case ORANGE:
-                return (35 + rand.nextInt(16)) * 1000; // 35-50 secondi
+                return (35 + rand.nextInt(16)) * 1000; // 35-50 sec
             case RED:
-                return (45 + rand.nextInt(16)) * 1000; // 45-60 secondi
+                return (45 + rand.nextInt(16)) * 1000; // 45-60 sec
             default:
-                return 20000; // Default 20 secondi
+                return 20000; // Default 20 sec
         }
     }
 
     private TriageColor improvePatientColor(TriageColor color) {
-        // Probabilità di migliorare di 1 o 2 colori
+        // Probability of improvement of 1 or 2 colors 
         double rand = random.nextDouble();
 
         if (rand < 0.6) {
-            // 60% probabilità di migliorare di 1 colore
+            // 60% probability of improving by 1 color
             return decreaseColor(color, 1);
         } else if (rand < 0.9) {
-            // 30% probabilità di migliorare di 2 colori
+            // 30% probability of improving by 2 colors
             return decreaseColor(color, 2);
         } else {
-            // 10% probabilità di non migliorare
+            // 10% probability of no improvement
             return color;
         }
     }
@@ -191,12 +201,12 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
     private TriageColor decreaseColor(TriageColor color, int steps) {
 
         if (color == TriageColor.WHITE) {
-            return TriageColor.WHITE; // Non può migliorare
+            return TriageColor.WHITE; // you can't improve beyond white
         }
-        // Usa direttamente l'ordine dell'enum
+        // Use directly the ordinal of the enum to calculate the new color after improvement
         TriageColor[] colors = TriageColor.values(); // [WHITE, BLUE, GREEN, ORANGE, RED]
-        int currentIndex = color.ordinal(); // Posizione nell'enum
-        int newIndex = Math.max(0, currentIndex - steps); // Non andare sotto WHITE
+        int currentIndex = color.ordinal(); // Get the index of the current color
+        int newIndex = Math.max(0, currentIndex - steps); // Calculate the new index after improvement, ensuring it doesn't go below 0
 
         return colors[newIndex];
     }

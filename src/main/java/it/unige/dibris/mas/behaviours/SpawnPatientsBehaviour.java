@@ -9,6 +9,9 @@ import java.util.Random;
 
 public class SpawnPatientsBehaviour extends TickerBehaviour {
 
+    // This behaviour is responsible for automatically spawning patients at random intervals with random severity levels.
+    // For HIGH and MEDIUM severity patients, it will attempt to dispatch an ambulance if available, otherwise it will spawn them normally.
+
     private Random random = new Random();
     private static final long MAX_SPAWN_INTERVAL = 20000; // Max 1 secondo
     private long nextSpawnTime;
@@ -54,7 +57,6 @@ public class SpawnPatientsBehaviour extends TickerBehaviour {
 
         SimulationLogger.getInstance().log("[Ambulance] Dispatched for HIGH priority patient");
 
-        // Crea il paziente
         it.unige.dibris.mas.Main.createPatientFromSpawn(severity, true);
 
 
@@ -74,6 +76,7 @@ public class SpawnPatientsBehaviour extends TickerBehaviour {
         it.unige.dibris.mas.Main.createPatientFromSpawn(severity, false);
     }
 
+    // Randomly assign severity with probabilities: LOW 50%, MEDIUM 30%, HIGH 20% (adjust as needed)
     private PatientSeverity getRandomSeverity() {
         double rand = random.nextDouble();
 

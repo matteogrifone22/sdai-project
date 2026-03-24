@@ -15,7 +15,6 @@ public class DoctorAgent extends Agent {
 
         Main.updateDoctorStatus(getLocalName(), "FREE");
 
-        // Aggiungi comportamenti per gestire i pazienti (da implementare)
         addBehaviour(new ReceivePatientBehaviour(this, Main.sharedQueueManager, Main.sharedBedManager));
         Main.agentReady();
     }

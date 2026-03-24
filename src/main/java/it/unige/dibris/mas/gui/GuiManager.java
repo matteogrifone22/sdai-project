@@ -225,7 +225,7 @@ public class GuiManager {
 
         Tab tab1 = new Tab("Color Count", createColorCountView());
         Tab tab2 = new Tab("Discharge Time", createLineChartView());
-        Tab tab3 = new Tab("Ambulanze", createAmbulancesStatusView());
+        Tab tab3 = new Tab("Ambulance Status", createAmbulancesStatusView());
 
         tabPane.getTabs().addAll(tab1, tab2, tab3);
 
@@ -234,6 +234,10 @@ public class GuiManager {
                 tabPane);
 
         // ========== BLOCCO (1,1) - BED MANAGEMENT ==========
+
+        //create two tab one with the bed management and one with the ambulances status
+
+        
 
         bedsGridPane = new GridPane();
         bedsGridPane.setHgap(10);
@@ -811,7 +815,6 @@ public class GuiManager {
         }
     }
 
-    // Aggiungi in cima alle variabili statiche:
     private static javafx.scene.chart.BarChart<String, Number> barChart;
     private static javafx.scene.chart.XYChart.Series<String, Number> barChartSeries;
 
@@ -825,9 +828,9 @@ public class GuiManager {
         yAxis.setLabel("Average Time (seconds)");
 
         barChart = new javafx.scene.chart.BarChart<>(xAxis, yAxis);
-        barChart.setTitle("Average Discharge Time by Entry Color");
+        barChart.setTitle("Average Discharge Time by Entry Color (1s = 2min)");
         barChart.setPrefHeight(400);
-        barChart.setLegendVisible(false); // ← RIMUOVI LA LEGGENDA
+        barChart.setLegendVisible(false); 
 
         barChartSeries = new javafx.scene.chart.XYChart.Series<>();
         barChartSeries.setName("Avg Time");
@@ -840,7 +843,6 @@ public class GuiManager {
 
         barChart.getData().add(barChartSeries);
         barChart.setStyle("-fx-bar-fill: #FF0000;");
-        // ← AGGIUNGI: Mostra il tempo sopra ogni barra
         for (javafx.scene.chart.XYChart.Data<String, Number> data : barChartSeries.getData()) {
             data.nodeProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
@@ -851,7 +853,6 @@ public class GuiManager {
                     javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip(label);
                     javafx.scene.control.Tooltip.install(newValue, tooltip);
 
-                    // Colora la barra
                     String hexColor = getHexColorForChart(TriageColor.valueOf(data.getXValue().toUpperCase()));
                     newValue.setStyle("-fx-bar-fill: " + hexColor + ";");
                 }
@@ -863,14 +864,12 @@ public class GuiManager {
 
     public static void updateDischargeStats(String colorName, long treatmentTime) {
         Platform.runLater(() -> {
-            // Aggiungi il tempo alla lista
             List<Long> times = dischargeTimesByColor.get(colorName);
             if (times != null) {
                 times.add(treatmentTime);
 
                 SimulationLogger.getInstance().log("[DischargeStats] " + colorName + " time: " + treatmentTime + "s");
 
-                // Aggiorna il grafico
                 updateBarChart();
             } else {
                 SimulationLogger.getInstance().log("[DischargeStats ERROR] Color not found: " + colorName);
@@ -890,12 +889,10 @@ public class GuiManager {
                 long avgTime = times.stream().mapToLong(Long::longValue).sum() / times.size();
                 data.setYValue(avgTime);
 
-                // ← COLORA LA BARRA
                 String hexColor = getHexColorForChart(TriageColor.valueOf(colorLabel.toUpperCase()));
                 if (data.getNode() != null) {
                     data.getNode().setStyle("-fx-bar-fill: " + hexColor + ";");
 
-                    // ← AGGIUNGI LABEL SOPRA LA BARRA
                     long minutes = avgTime / 2;
                     String label = avgTime + "s (" + minutes + " min)";
                     javafx.scene.control.Label valueLabel = new javafx.scene.control.Label(label);

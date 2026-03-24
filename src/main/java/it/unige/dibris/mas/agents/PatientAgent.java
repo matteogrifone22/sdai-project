@@ -19,8 +19,8 @@ public class PatientAgent extends Agent {
     private boolean arrivedByAmbulance = false;
 
     protected void setup() {
-        // Ricevi il nome dal container
-        this.patientId = getLocalName();
+        
+        this.patientId = getLocalName(); // obtain name from agent name (e.g., "Patient_1")
         this.entryColor = null;
         this.color = null;
         this.isRegistered = false;
@@ -28,7 +28,7 @@ public class PatientAgent extends Agent {
 
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            // Se è una stringa, convertila
+            
             if (args[0] instanceof String) {
                 this.severity = PatientSeverity.valueOf((String) args[0]);
             } else if (args[0] instanceof PatientSeverity) {
@@ -38,10 +38,10 @@ public class PatientAgent extends Agent {
             this.severity = PatientSeverity.MEDIUM; // Default
         }
         this.arrivedByAmbulance = (args != null && args.length > 1) ? (Boolean) args[1] : false;
-        this.isRegistered = this.arrivedByAmbulance; // Se arriva con ambulanza, è già registrato
+        this.isRegistered = this.arrivedByAmbulance; // if arrived by ambulance, consider already registered
 
         try {
-            Thread.sleep(1000); // ← Delay di 1 secondo prima di iniziare
+            Thread.sleep(1000); // 1 sec delay to simulate time taken to arrive and be ready for registration
             this.arrivalTime = System.currentTimeMillis();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -49,7 +49,6 @@ public class PatientAgent extends Agent {
 
         SimulationLogger.getInstance().log("[" + patientId + "] Patient arrived at ED");
 
-        // Aggiungi un comportamento (creeremo dopo)
         addBehaviour(new SendRegistrationBehaviour());
         addBehaviour(new ReceiveTriageResultBehaviour());
         addBehaviour(new DischargeBehaviour());  
@@ -60,6 +59,8 @@ public class PatientAgent extends Agent {
         SimulationLogger.getInstance().log("[" + patientId + "] Patient discharged");
     }
 
+    // getters and setters
+
     public boolean isArrivedByAmbulance() {
         return arrivedByAmbulance;
     }
@@ -68,7 +69,6 @@ public class PatientAgent extends Agent {
         this.arrivedByAmbulance = arrivedByAmbulance;
     }
 
-    // Getter
     public String getPatientId() {
         return patientId;
     }

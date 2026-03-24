@@ -7,6 +7,8 @@ import java.util.Queue;
 import java.util.Map;
 
 public abstract class ProcessQueueBehaviour extends TickerBehaviour {
+
+    // abstract behaviour to process a queue of patients, used by both triage and registration agents
     
     public ProcessQueueBehaviour(Agent agent, long period) {
         super(agent, period);
@@ -14,7 +16,7 @@ public abstract class ProcessQueueBehaviour extends TickerBehaviour {
     
     @Override
     protected final void onTick() {
-        // Questo è il template - non cambia mai
+
         Queue<Map.Entry<String, ACLMessage>> queue = getQueue();
         
         if (!queue.isEmpty()) {
@@ -22,14 +24,11 @@ public abstract class ProcessQueueBehaviour extends TickerBehaviour {
             String patientId = entry.getKey();
             ACLMessage originalMsg = entry.getValue();
             
-            // Chiama il metodo specifico dell'agente
             processPatient(patientId, originalMsg);
         }
     }
     
-    // Metodo template - ogni agente lo implementa
     protected abstract void processPatient(String patientId, ACLMessage originalMsg);
     
-    // Ogni agente deve fornire la sua coda
     protected abstract Queue<Map.Entry<String, ACLMessage>> getQueue();
 }

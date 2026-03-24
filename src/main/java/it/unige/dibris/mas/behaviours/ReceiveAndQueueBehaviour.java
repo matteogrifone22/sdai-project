@@ -8,13 +8,14 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public abstract class ReceiveAndQueueBehaviour extends CyclicBehaviour {
+
+    // This behaviour listens for incoming patient messages and adds them to the appropriate queue, sending WAIT if not first in line
     
     public void action() {
         ACLMessage msg = myAgent.receive();
 
         
         if (msg != null) {
-            // ← ESTRAI DAL MESSAGGIO, NON DAL SENDER
             String patientId = msg.getSender().getLocalName();
             
             Queue<Map.Entry<String, ACLMessage>> queue = getQueue();
@@ -24,7 +25,6 @@ public abstract class ReceiveAndQueueBehaviour extends CyclicBehaviour {
             String agentName = getAgentName();
             SimulationLogger.getInstance().log("[" + agentName + "] " + patientId + " joined queue. Size: " + queue.size());
             
-            // Se non è il primo in coda, rispondi WAIT
             if (queue.size() > 1) {
                 ACLMessage reply = msg.createReply();
                 reply.setContent("WAIT");
@@ -35,9 +35,7 @@ public abstract class ReceiveAndQueueBehaviour extends CyclicBehaviour {
         }
     }
     
-    // Ogni agente fornisce la sua coda
     protected abstract Queue<Map.Entry<String, ACLMessage>> getQueue();
     
-    // Ogni agente fornisce il suo nome
     protected abstract String getAgentName();
 }

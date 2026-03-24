@@ -5,6 +5,8 @@ import jade.lang.acl.ACLMessage;
 import it.unige.dibris.mas.gui.SimulationLogger;
 
 public class DischargeBehaviour extends CyclicBehaviour {
+
+    // This behaviour listens for a "DISCHARGE" message to terminate the patient agent
     
     @Override
     public void action() {
@@ -14,7 +16,6 @@ public class DischargeBehaviour extends CyclicBehaviour {
             
             SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Discharged");
             
-            // Termina
             myAgent.doDelete();
         }
     }

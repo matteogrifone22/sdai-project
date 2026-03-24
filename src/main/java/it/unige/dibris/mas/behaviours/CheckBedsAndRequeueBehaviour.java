@@ -8,6 +8,10 @@ import it.unige.dibris.mas.ontology.BedInfo;
 
 public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
 
+    //NURSE CHECK: every CheckInterval seconds check one bed,
+    // if occupied requeue the patient (without removing them from the bed)
+    // to give them another chance to be treated by a doctor
+
     private BedManagerAgent bedManager;
     private int startBed;
     private int endBed;
@@ -18,18 +22,18 @@ public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
         this.bedManager = bedManager;
         this.startBed = startBed;
         this.endBed = endBed;
-        this.currentBedIndex = startBed; // ← NUOVO
+        this.currentBedIndex = startBed;
     }
 
     @Override
     protected void onTick() {
-        // Controlla UN solo letto per tick
+        // check one bed at a time
         checkBedAndRequeue(currentBedIndex);
 
-        // Passa al letto successivo
+        // go to the next bed for the next tick
         currentBedIndex++;
         if (currentBedIndex > endBed) {
-            currentBedIndex = startBed; // Ricomincia da capo
+            currentBedIndex = startBed; // loop back to the first bed after reaching the last one
         }
     }
 
@@ -45,9 +49,9 @@ public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
         it.unige.dibris.mas.Main.highlightBedForNurseCheck(bedId, myAgent.getLocalName());
 
         
-        // Rimetti in coda
-        if (bed.queueEntry != null) {  // ← CONTROLLA SE ESISTE
-            bedManager.getQueueManager().addPatient(bed.queueEntry, bed.color);  // ← USA queueEntry da BedInfo
+        // requeue the patient to give them another chance to be treated by a doctor
+        if (bed.queueEntry != null) {  
+            bedManager.getQueueManager().addPatient(bed.queueEntry, bed.color);  
             SimulationLogger.getInstance().log("[" + myAgent.getLocalName() + "] Requeued " + bed.patientId 
                 + " to priority queue with color " + bed.color.getLabel() + " (still in bed " + bedId + ")");
         } else {

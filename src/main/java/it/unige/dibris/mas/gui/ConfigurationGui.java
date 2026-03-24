@@ -22,11 +22,11 @@ public class ConfigurationGui {
         root.setAlignment(Pos.CENTER);
         root.setStyle("-fx-background-color: #f5f5f5;");
 
-        // Titolo
+        // Title
         Label titleLabel = new Label("ED System Configuration");
         titleLabel.setStyle("-fx-font-size: 20; -fx-font-weight: bold;");
 
-        // Numero Dottori
+        // Doctors 
         HBox doctorsBox = new HBox(10);
         doctorsBox.setAlignment(Pos.CENTER_LEFT);
         Label doctorsLabel = new Label("Number of Doctors:");
@@ -35,7 +35,7 @@ public class ConfigurationGui {
         doctorsSpinner.setPrefWidth(100);
         doctorsBox.getChildren().addAll(doctorsLabel, doctorsSpinner);
 
-        // Numero Letti
+        // Beds
         HBox bedsBox = new HBox(10);
         bedsBox.setAlignment(Pos.CENTER_LEFT);
         Label bedsLabel = new Label("Number of Beds:");
@@ -44,7 +44,7 @@ public class ConfigurationGui {
         bedsSpinner.setPrefWidth(100);
         bedsBox.getChildren().addAll(bedsLabel, bedsSpinner);
 
-        // Numero Nurse (max = numero letti)
+        // Number of Nurses (max = number of beds)
         HBox nursesBox = new HBox(10);
         nursesBox.setAlignment(Pos.CENTER_LEFT);
         Label nursesLabel = new Label("Number of Nurses:");
@@ -53,7 +53,7 @@ public class ConfigurationGui {
         nursesSpinner.setPrefWidth(100);
         nursesBox.getChildren().addAll(nursesLabel, nursesSpinner);
 
-        // Numero Ambulanze
+        // Number of Ambulances
         HBox ambulancesBox = new HBox(10);
         ambulancesBox.setAlignment(Pos.CENTER_LEFT);
         Label ambulancesLabel = new Label("Number of Ambulances:");
@@ -62,11 +62,11 @@ public class ConfigurationGui {
         ambulancesSpinner.setPrefWidth(100);
         ambulancesBox.getChildren().addAll(ambulancesLabel, ambulancesSpinner);
 
-        // Label di validazione
+        // Validation Label
         Label validationLabel = new Label("");
         validationLabel.setStyle("-fx-text-fill: #DC143C; -fx-font-weight: bold;");
 
-        // Listener per validare nurse <= letti
+        // Listeners to ensure nurses <= beds
         bedsSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
             ((SpinnerValueFactory.IntegerSpinnerValueFactory) nursesSpinner.getValueFactory()).setMax(newVal);
             if (nursesSpinner.getValue() > newVal) {
@@ -75,7 +75,7 @@ public class ConfigurationGui {
             validationLabel.setText("");
         });
 
-        // Bottone Start
+        // Start Button
         Button startButton = new Button("Start ED Simulation");
         startButton.setPrefWidth(150);
         startButton.setStyle(
@@ -86,13 +86,13 @@ public class ConfigurationGui {
             int beds = bedsSpinner.getValue();
             int nurses = nursesSpinner.getValue();
 
-            // Validazione
+            // Validation
             if (nurses > beds) {
                 validationLabel.setText("ERROR: Nurses cannot exceed number of beds!");
                 return;
             }
 
-            // Salva i valori
+            // Save configuration and proceed
             numDoctors = doctors;
             numNurses = nurses;
             numBeds = beds;
@@ -102,11 +102,9 @@ public class ConfigurationGui {
             SimulationLogger.getInstance()
                     .log("Configuration: " + doctors + " Doctors, " + beds + " Beds, " + nurses + " Nurses");
 
-            // ← CAMBIA QUI: Chiudi la finestra corrente
             Stage configStage = (Stage) startButton.getScene().getWindow();
             configStage.close();
 
-            // Chiama il callback DOPO aver chiuso
             onConfigComplete.run();
         });
 
@@ -128,7 +126,6 @@ public class ConfigurationGui {
         primaryStage.show();
     }
 
-    // Getter per i valori
     public static int getNumDoctors() {
         return numDoctors;
     }

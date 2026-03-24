@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimulationLogger {
+
+    // Singleton logger to collect and display simulation events in the GUI
+
     private static SimulationLogger instance;
     private List<Runnable> listeners = new ArrayList<>();
     private StringBuilder logBuffer = new StringBuilder();
@@ -20,9 +23,8 @@ public class SimulationLogger {
     
     public void log(String message) {
         logBuffer.append(message).append("\n");
-        System.out.println(message);  // Stampa anche al terminale
+        System.out.println(message);  
         
-        // Notifica i listener (la GUI)
         Platform.runLater(() -> {
             listeners.forEach(Runnable::run);
         });

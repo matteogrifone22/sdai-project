@@ -12,22 +12,20 @@ import java.util.Map;
 public class TriageAgent extends Agent {
     
     private Queue<Map.Entry<String, PatientSeverity>> waitingPatients = new LinkedList<>();
-    private QueueManagerAgent queueManager;  // ← NUOVO
-    private static final long TRIAGE_DURATION = 10000;  // 10 secondi (5 min reali)
+    private QueueManagerAgent queueManager; 
+    private static final long TRIAGE_DURATION = 10000;  // 10 seconds
 
     
     protected void setup() {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Triage Agent started");
         
-        // NUOVO: Ricevi il QueueManager dagli argomenti
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
             queueManager = (QueueManagerAgent) args[0];
         }
         
-        addBehaviour(new ReceiveFromRegistrationBehaviour());
-        addBehaviour(new ProcessTriageQueueBehaviour(this, queueManager, TRIAGE_DURATION));  // ← Passa il QueueManager e il tempo di elaborazione
-        
+        addBehaviour(new ReceiveFromRegistrationBehaviour()); // receive patients from registration and add them to the triage queue
+        addBehaviour(new ProcessTriageQueueBehaviour(this, queueManager, TRIAGE_DURATION)); // process the triage queue and send patients to the queue manager
         it.unige.dibris.mas.Main.agentReady();
     }
     

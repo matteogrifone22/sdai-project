@@ -25,7 +25,7 @@ public class QueueManagerAgent extends Agent {
         SimulationLogger.getInstance().log("[" + getLocalName() + "] Queue Manager Agent shutting down");
     }
 
-    // Thread-safe: aggiungi paziente alla coda
+    // Add a patient to the queue in a thread-safe way, maintaining order based on triage color
     public void addPatient(PatientQueueEntry patient, TriageColor color) {
         queueLock.writeLock().lock();
         try {
@@ -38,13 +38,13 @@ public class QueueManagerAgent extends Agent {
             
             Map.Entry<PatientQueueEntry, TriageColor> newEntry = new java.util.AbstractMap.SimpleEntry<>(patient, color);
 
-            // Trova la posizione giusta per mantenere l'ordine
+        
             int insertPosition = patientQueue.size();
 
             for (int i = 0; i < patientQueue.size(); i++) {
                 TriageColor existingColor = patientQueue.get(i).getValue();
 
-                // Se il nuovo colore ha priorità MAGGIORE, inserisci prima
+                // Higher priority colors should be placed before lower priority ones
                 if (color.getPriority() > existingColor.getPriority()) {
                     insertPosition = i;
                     break;
@@ -61,7 +61,7 @@ public class QueueManagerAgent extends Agent {
         }
     }
 
-    // Thread-safe: prendi il primo paziente dalla coda (usato dai dottori)
+    // Remove and return the next patient from the queue in a thread-safe way (use by doctors)
     public Map.Entry<PatientQueueEntry, TriageColor> getNextPatient() {
         queueLock.writeLock().lock();
         try {
@@ -76,7 +76,7 @@ public class QueueManagerAgent extends Agent {
         }
     }
 
-    // Thread-safe: leggi lo status della coda (senza modificarla)
+    
     public String getQueueStatus() {
         queueLock.readLock().lock();
         try {
@@ -93,7 +93,7 @@ public class QueueManagerAgent extends Agent {
         }
     }
 
-    // Thread-safe: ottieni la dimensione della coda
+
     public int getQueueSize() {
         queueLock.readLock().lock();
         try {

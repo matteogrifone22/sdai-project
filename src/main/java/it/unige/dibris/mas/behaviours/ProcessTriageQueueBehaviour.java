@@ -14,16 +14,18 @@ import java.util.Random;
 
 public class ProcessTriageQueueBehaviour extends TickerBehaviour {
 
+    // This behaviour processes the triage queue, assigns colors, and sends patients to the queue manager
+
     private Random random = new Random();
     private String currentPatientId = null;
     private PatientSeverity currentPatientSeverity = null;
     private long triageStartTime = 0;
     private long TRIAGE_DURATION = 5000;
-    private QueueManagerAgent queueManager;  // ← NUOVO
+    private QueueManagerAgent queueManager; 
 
-    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerAgent queueManager, long triageDuration) {  // ← MODIFICATO
+    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerAgent queueManager, long triageDuration) {  
         super(agent, 1000);
-        this.queueManager = queueManager;  // ← NUOVO
+        this.queueManager = queueManager;  
         this.TRIAGE_DURATION = triageDuration;
     }
 
@@ -51,13 +53,13 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
                 SimulationLogger.getInstance()
                         .log("[TriageAgent] Triaging " + currentPatientId + " → " + color.getLabel());
 
-                // Manda il colore al paziente
+                // Send color to patient
                 jade.lang.acl.ACLMessage patientMsg = new jade.lang.acl.ACLMessage(jade.lang.acl.ACLMessage.INFORM);
                 patientMsg.addReceiver(new jade.core.AID(currentPatientId, jade.core.AID.ISLOCALNAME));
                 patientMsg.setContent("TRIAGE_RESULT|" + color.name());
                 myAgent.send(patientMsg);
 
-                // ← NUOVO: Aggiungi il paziente direttamente alla coda del QueueManager
+                // Send patient to queue manager
                 queueManager.addPatient(new it.unige.dibris.mas.ontology.PatientQueueEntry(currentPatientId, color, System.currentTimeMillis()), color);
 
                 Main.updatePatientColor(currentPatientId, color.name());
@@ -67,6 +69,7 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
         }
     }
 
+    // probability are based on my intuintion and some quick research on typical triage distributions, but feel free to adjust them as you see fit
     private TriageColor assignColor(PatientSeverity severity) {
         switch (severity) {
             case LOW:
