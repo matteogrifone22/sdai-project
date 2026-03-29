@@ -225,9 +225,8 @@ public class GuiManager {
 
         Tab tab1 = new Tab("Color Count", createColorCountView());
         Tab tab2 = new Tab("Discharge Time", createLineChartView());
-        Tab tab3 = new Tab("Ambulance Status", createAmbulancesStatusView());
 
-        tabPane.getTabs().addAll(tab1, tab2, tab3);
+        tabPane.getTabs().addAll(tab1, tab2);
 
         chartBox.getChildren().addAll(
                 new Label("Charts"),
@@ -273,6 +272,19 @@ public class GuiManager {
                 new Separator(),
                 bedsScrollPane);
 
+        TabPane bottomRightTabPane = new TabPane();
+        bottomRightTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        Tab bedTab = new Tab("Bed Management", bedsContainer);
+        Tab ambulanceTab = new Tab("Ambulance Status", createAmbulancesStatusView());
+        bottomRightTabPane.getTabs().addAll(bedTab, ambulanceTab);
+
+        VBox operationsContainer = new VBox(10);
+        operationsContainer.setPadding(new Insets(10));
+        operationsContainer.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1;");
+        operationsContainer.getChildren().addAll(
+            new Label("Operations"),
+            bottomRightTabPane);
+
         // ========== GRID LAYOUT 2x2 ==========
 
         GridPane gridPane = new GridPane();
@@ -283,7 +295,7 @@ public class GuiManager {
         gridPane.add(logBox, 0, 0);
         gridPane.add(queueBox, 1, 0);
         gridPane.add(chartBox, 0, 1);
-        gridPane.add(bedsContainer, 1, 1);
+        gridPane.add(operationsContainer, 1, 1);
 
         // Configura colonne e righe
         javafx.scene.layout.ColumnConstraints col = new javafx.scene.layout.ColumnConstraints();
@@ -458,11 +470,12 @@ public class GuiManager {
         Label colorLabel = new Label("");
         colorLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #666666;");
 
-        Label timeLabel = new Label("");
-        timeLabel.setStyle("-fx-font-size: 9; -fx-text-fill: #999999;");
+        Label nurseLabel = new Label("");
+        nurseLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #FF8C00; -fx-font-weight: bold;");
 
-        bedBox.getChildren().addAll(bedLabel, bedCircle, patientLabel, colorLabel, timeLabel);
-        bedBox.setUserData(new BedUIData(bedCircle, patientLabel, colorLabel, timeLabel));
+
+        bedBox.getChildren().addAll(bedLabel, bedCircle, patientLabel, colorLabel, nurseLabel);
+        bedBox.setUserData(new BedUIData(bedCircle, patientLabel, colorLabel, nurseLabel));
 
         return bedBox;
     }
@@ -551,18 +564,16 @@ public class GuiManager {
                 data.patientLabel.setText("Free");
                 data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #999999;");
                 data.colorLabel.setText("");
-                data.timeLabel.setText("");
-                data.admissionTime = 0;
+                data.nurseLabel.setText("");
             } else {
                 String hexColor = getHexColorForChart(TriageColor.valueOf(colorName));
                 data.circle.setFill(javafx.scene.paint.Color.web(hexColor));
                 data.patientLabel.setText(patientId);
                 data.patientLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #000000; -fx-font-weight: bold;");
                 data.colorLabel.setText("Color: " + colorName);
+                data.nurseLabel.setText("");
 
-                long elapsedSeconds = (System.currentTimeMillis() - admissionTime) / 1000;
-                data.timeLabel.setText("Stay: " + elapsedSeconds + "s");
-                data.admissionTime = admissionTime;
+            
             }
         });
     }
@@ -575,10 +586,13 @@ public class GuiManager {
 
             BedUIData data = (BedUIData) bedBox.getUserData();
 
-            // Cambia solo opacity e label, NON la grandezza
+            
             bedBox.setOpacity(0.7);
-            data.timeLabel.setText(nurseName + " CHECK");
-            data.timeLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #FF8C00; -fx-font-weight: bold;");
+            data.nurseLabel.setText(nurseName + " CHECK");
+            data.nurseLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #FF8C00; -fx-font-weight: bold;");
+
+           
+            bedBox.setStyle("-fx-border-color: #FF8C00; -fx-border-width: 2;");
 
             new Thread(() -> {
                 try {
@@ -602,12 +616,7 @@ public class GuiManager {
             bedBox.setOpacity(1.0);
             bedBox.setStyle("-fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: white;");
 
-            if (data.admissionTime == 0) {
-                data.timeLabel.setText("");
-            } else {
-                long elapsedSeconds = (System.currentTimeMillis() - data.admissionTime) / 1000;
-                data.timeLabel.setText("Stay: " + elapsedSeconds + "s");
-            }
+           data.nurseLabel.setText("");
         });
     }
 
@@ -795,15 +804,13 @@ public class GuiManager {
         Circle circle;
         Label patientLabel;
         Label colorLabel;
-        Label timeLabel;
-        long admissionTime;
+        Label nurseLabel;
 
-        BedUIData(Circle circle, Label patientLabel, Label colorLabel, Label timeLabel) {
+        BedUIData(Circle circle, Label patientLabel, Label colorLabel, Label nurseLabel) {
             this.circle = circle;
             this.patientLabel = patientLabel;
             this.colorLabel = colorLabel;
-            this.timeLabel = timeLabel;
-            this.admissionTime = 0;
+            this.nurseLabel = nurseLabel;
         }
     }
 

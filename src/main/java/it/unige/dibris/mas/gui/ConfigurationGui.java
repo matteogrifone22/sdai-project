@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 public class ConfigurationGui {
 
     private static int numDoctors = 2;
-    private static int numNurses = 3;
+    private static int numNurses = 2;
     private static int numBeds = 6;
     private static int numAmbulances = 2;
     private static boolean configDone = false;
@@ -40,7 +40,7 @@ public class ConfigurationGui {
         bedsBox.setAlignment(Pos.CENTER_LEFT);
         Label bedsLabel = new Label("Number of Beds:");
         bedsLabel.setPrefWidth(150);
-        Spinner<Integer> bedsSpinner = new Spinner<>(1, 30, 5);
+        Spinner<Integer> bedsSpinner = new Spinner<>(1, 30, 6);
         bedsSpinner.setPrefWidth(100);
         bedsBox.getChildren().addAll(bedsLabel, bedsSpinner);
 
@@ -49,7 +49,7 @@ public class ConfigurationGui {
         nursesBox.setAlignment(Pos.CENTER_LEFT);
         Label nursesLabel = new Label("Number of Nurses:");
         nursesLabel.setPrefWidth(150);
-        Spinner<Integer> nursesSpinner = new Spinner<>(1, 10, 3);
+        Spinner<Integer> nursesSpinner = new Spinner<>(1, 10, 2);
         nursesSpinner.setPrefWidth(100);
         nursesBox.getChildren().addAll(nursesLabel, nursesSpinner);
 

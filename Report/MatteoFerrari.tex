@@ -1,48 +1,458 @@
 \documentclass{article}[12pt]
 \usepackage[a4paper, total={5.7in, 9in}]{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup[figure]{position=bottom}
 
 \begin{document}
-\title{Title of your project}
-\author{Your Name\\
-{\em Your email address}}
-\maketitle             
+\title{A Multi-Agent System for Emergency Department Management}
+\author{Matteo Ferrari 5174687\\
+{\em 5174687@studenti.unige.it}}
 
+\date{}
+\maketitle             
+\tableofcontents
+\newpage
 \section{Details of the proposal}
 \label{sec:yourProposal}
 
-Your proposal (full specification), the kind of your proposal (standard, creative), and the range on points associated with it (for standard projects) or the degree of difficulty (easy, medium, hard, for creative projects) should be made available here at the beginning of your report; this first page with information on you and on your proposal will not be counted in the number of pages of the report.
+The project I propose consists in the design and implementation of a Multi-Agent System for the management and simulation of an Emergency Department.
 
 \subsection{Full specification of your proposal}
 \label{subsec:specification}
 
-\subsection{The kind of your proposal}
+The following is the description I gave in the proposal form, which I used as a starting point for the development of the project, but which I have then modified and expanded during the development of the project itself.
+
+\vspace{\baselineskip}
+
+\noindent
+The project consists of the design and implementation of a Multi-Agent System for the management and simulation of an Emergency Department. The goal is to model the main actors involved in an Emergency Department as autonomous agents and to let them interact with each other.
+
+\noindent
+The project is inspired by the paper \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC2656074/}{``An Agent-Based Simulation Tool for\allowbreak\ Scheduling Emergency Department Physicians''} \cite{jones2008agent}.
+
+\noindent
+The system will be composed of the following agents:
+\begin{itemize}
+\item 1 Triage Agent
+\item 1 Queue Manager Agent
+\item 1 Bed Manager Agent
+\item n Bed Agents
+\item n Doctor Agents
+\item 1 Ambulance Agent
+\item n Patient Agents
+\end{itemize}
+
+\vspace{\baselineskip}
+
+\noindent
+The main differences with the above list of agents are:
+\begin{itemize}
+\item Queue Manager Agent and Bed Manager Agent are not implemented as agents, but as artifacts, which are shared resources that can be accessed by other agents. In particular, the Bed Agents become a dictionary inside the Bed Manager Artifact.
+\item I added a Registration Agent, which is responsible for registering patients in the Emergency Department.
+\item I implemented more than one Ambulance Agent; the number can be chosen by the user at the beginning of the simulation.
+\item I added an Automatic Spawn Agent, which is responsible for automatically spawning new patients in the Emergency Department at random intervals.
+\item I implemented a configurable number of Nurse Agents, which can be chosen by the user at the start of the simulation.
+\end{itemize}
+
 \label{subsec:kind}
 
 \subsection{The range of points/difficulty of your proposal}
 \label{subsec:points}
 
+The project is a creative project, and is classified as hard because it requires the design and implementation of a complex Multi-Agent System, with many different types of agents and many interactions between them.
+
 \pagebreak
 
-\section{Introduction}
-\label{sec:intro}
+\section{Domain Model (Ontology)}
+\label{sec:domain-model}
 
-\subsection{One subsection of the Introduction}
-\label{subsec:intro-level1}
+This section describes the domain model of the system, including the main concepts and entities involved in Emergency Department (ED) management.
 
-\subsubsection{One subsubsection of the Introduction}
-\label{subsubsec:intro-level2}
+\subsection{Simulation Time Scale}
+To balance the need for a dynamic real-time visualization with the realistic duration of medical procedures, the simulation adopts a scaled time model. Specifically, the time ratio is set such that \textbf{1 second} of simulation time corresponds to \textbf{2 minutes} of real-world Emergency Department activity. This scaling ensures that the treatment cycles and patient flows are observable within a reasonable testing timeframe while maintaining proportional clinical durations.
 
-Use this style, with these margins, font dimension (12 pt) and space between lines, for the content of your report. 
+\subsection{Severity Levels}
+\label{subsec:severity-levels}
+Severity levels are used to classify patients according to the urgency of their conditions. Three levels are defined:
 \begin{itemize}
-\item Projects which consist in a critical analysis and discussion of some topic related with the course must be at least 16 pages long, using this format. 
-\item Projects which consist in experimenting existing tools must be at least 12 pages long. 
-\item Projects which consist in the design/development of software must be accompanied by a document explaining the software itself, with basic instructions for its usage, and must be at least 8 pages long in this format.
-    \end{itemize}
-Whatever the type of the project, this report must be written in a good English: grammar and fluency errors will affect the final mark. 
+    \item \textbf{Low}
+    \item \textbf{Medium}
+    \item \textbf{High}
+\end{itemize}
+Each severity level is assigned to a patient either randomly at spawn time by the \textbf{AutomaticSpawnAgent} (see Section~\ref{subsec:automatic-spawn-agent}) or manually by the user through the corresponding GUI control.
 
-\noindent Finally, note that plagiarism is a crime. If we will realize that you just copied and pasted pieces of information from the web, without any effort to understand and re-elaborate them, the assigned mark for the project will be 0 with no possibility to re-submit it. 
+\subsection{Triage Colors}
+\label{subsec:triage-colors}
+Triage colors are used to classify patients based on clinical severity and to determine queue priority. Five colors are considered, based on the triage system currently used in Italy:
+\begin{itemize}
+    \item \textbf{White} (Priority 0)
+    \item \textbf{Green} (Priority 1)
+    \item \textbf{Blue} (Priority 2)
+    \item \textbf{Orange} (Priority 3)
+    \item \textbf{Red} (Priority 4)
+\end{itemize}
+Each color is mapped to a numerical value to facilitate sorting within the \textbf{QueueManagerArtifact} (see Section~\ref{subsec:queue-manager-artifact}).
 
- \bibliographystyle{splncs04}
- \bibliography{bibliography}
+\subsection{PatientQueueEntry}
+\label{subsec:patient-queue-entry}
+The \texttt{PatientQueueEntry} is a data structure representing an entry in the priority queue. It contains the following fields:
+\begin{itemize}
+    \item \texttt{patientId}: the unique identifier of the patient.
+    \item \texttt{entryColor}: the initial triage color assigned to the patient. It may differ from the current color and is primarily used for calculating discharge time statistics.
+    \item \texttt{arrivalTime}: the timestamp of the patient's arrival in the ED.
+\end{itemize}
+
+\subsection{BedInfo}
+\label{subsec:bed-info}
+The \texttt{BedInfo} structure stores information regarding a specific bed. It contains:
+\begin{itemize}
+    \item \texttt{bedId}: the unique identifier of the bed.
+    \item \texttt{patientId}: the ID of the patient currently occupying the bed (null if available).
+    \item \texttt{color}: the current triage color of the occupant.
+    \item \texttt{admissionTime}: the time at which the patient was admitted to the bed.
+    \item \texttt{queueEntry}: a reference to the \texttt{PatientQueueEntry} of the occupant. 
+\end{itemize}
+\noindent
+Note: Although \texttt{queueEntry} contains redundant information (such as the \texttt{patientId}), it was maintained to simplify the update of statistics upon discharge without requiring a full refactor of the existing logic.
+
+\section{Agents and Artifacts}
+\label{sec:agents-artifacts}
+
+This section provides a detailed description of the \textbf{Agents} and \textbf{Artifacts} that compose the system, outlining their specific behaviors and roles. 
+For a high-level overview of how these components interact throughout a patient's journey, please refer to the system architecture and workflow diagram in Section~\ref{sec:architecture-workflow}.
+
+\subsection{AutomaticSpawnAgent}
+\label{subsec:automatic-spawn-agent}
+
+The \textbf{AutomaticSpawnAgent} is responsible for the continuous generation of new patients in the Emergency Department at random intervals, governed by a configurable maximum time between spawns.
+\noindent
+When an instance of \textbf{PatientAgent} (Section~\ref{subsec:patient-agent}) is created, it is assigned a random severity level. Depending on this level and the real-time availability of an \textbf{AmbulanceAgent} (Section~\ref{subsec:ambulance-agent}), the patient will either arrive as a walk-in case or be transported by ambulance. This initial branching significantly impacts the patient's subsequent flow and interaction within the system.
+\subsection{RegistrationAgent}
+\label{subsec:registration-agent}
+
+\noindent
+The \textbf{RegistrationAgent} is responsible for registering patients in the Emergency Department. 
+
+\noindent
+This agent interacts with incoming walk-in patients by receiving an \texttt{ACL Message} from the \textbf{PatientAgent} with a registration request. The \textbf{RegistrationAgent} replies with another \texttt{ACL Message} confirming the registration or with a "\textit{Wait}" message if the registration desk is currently busy with another patient.
+
+\noindent
+While the registration desk is busy, the \textbf{PatientAgent} waits in a registration queue.
+
+\noindent
+After the registration is completed, the \textbf{RegistrationAgent} forwards the patient's data to the \textbf{TriageAgent} (Section~\ref{subsec:triage-agent}) via an \texttt{ACL Message} containing the ID and the severity level of the patient.
+
+\subsection{TriageAgent}
+\label{subsec:triage-agent}
+
+\noindent
+The \textbf{TriageAgent} is responsible for assigning a triage color to each patient based on their initial severity level.
+
+\noindent
+The color is assigned according to the following mapping:
+\begin{itemize}
+    \item \textbf{Low severity:} White, Green, or Blue.
+    \item \textbf{Medium severity:} Blue or Orange.
+    \item \textbf{High severity:} Orange or Red.
+\end{itemize}
+
+\noindent
+Each color is assigned based on a specific probability distribution, defined during the design phase to reflect typical clinical scenarios.
+
+\noindent
+After assigning the triage color, the \textbf{TriageAgent} sends an \texttt{ACL Message} to the patient containing the assigned color and then forwards the patient's data to the \textbf{QueueManagerArtifact}. 
+
+\noindent
+Similarly to the \textbf{RegistrationAgent}, the \textbf{TriageAgent} can only process one patient at a time. Therefore, incoming patients must wait in a triage-specific queue until they receive a confirmation from the agent.
+\subsection{QueueManagerArtifact}
+\label{subsec:queue-manager-artifact}
+
+\noindent
+The \textbf{QueueManagerArtifact} is responsible for managing the priority queue of patients waiting to be examined by a doctor. The queue order is strictly determined by the triage color assigned to each patient. The artifact stores both the \texttt{PatientQueueEntry} and the current triage color for each patient.
+
+\noindent
+Originally, the Queue Manager was implemented as an agent. In that version, it managed the queue through asynchronous messages between the \textbf{TriageAgent}, the \textbf{RegistrationAgent}, and the \textbf{DoctorAgent} instances (Section~\ref{subsec:doctor-agent}). The \textbf{RegistrationAgent} would add a patient to the queue without a color, and the \textbf{TriageAgent} would later send a message to update the color and the patient's priority.
+
+\noindent
+While functional, this agent-based implementation proved overly complex. Specifically, when multiple \textbf{DoctorAgent} instances were introduced, a \textit{race condition} occurred: if two or more doctors requested a patient simultaneously, they could occasionally be assigned the same one. 
+Attempting to have the Queue Manager "push" patients to available doctors also failed, as it led to inefficient workload distribution, where some doctors remained idle while others were overloaded.
+
+\noindent
+To resolve these issues, the \textbf{QueueManager} was refactored from an \textbf{Agent} into an \textbf{Artifact}. This allows doctors to access the queue directly through operations protected by a \textbf{lock mechanism}, effectively eliminating race conditions. Additionally, the system flow was simplified by removing the connection between the \textbf{RegistrationAgent} and this \textbf{Artifact}, leaving the \textbf{TriageAgent} as the sole entity responsible for adding patients to the queue once triage is complete.
+
+\subsection{BedManagerArtifact}
+\label{subsec:bed-manager-artifact}
+
+\noindent
+The \textbf{BedManagerArtifact} is responsible for managing the beds within the Emergency Department, maintaining a real-time registry of occupied and available slots. It utilizes a \texttt{HashMap} that maps each \texttt{bedId} to a \texttt{BedInfo} data structure, which stores all relevant details about the bed and its current occupant.
+
+\noindent
+The artifact provides methods to check bed availability, assign a bed to a patient, and release a bed upon discharge. When a patient requires hospitalization, the \textbf{DoctorAgent} queries the \textbf{BedManagerArtifact}. If a bed is available, the patient is admitted immediately. However, if the department is at full capacity, the artifact performs a priority-based replacement: it identifies the patient with the lowest triage priority; if multiple patients share the same lowest priority, the one with the longest stay is discharged to accommodate the new patient.
+
+\noindent
+Following the successful refactoring of the \textbf{QueueManagerArtifact}, the Bed Manager was also implemented as an \textbf{Artifact} rather than an agent. As a shared resource accessed simultaneously by multiple \textbf{DoctorAgent} and \textbf{NurseAgent} (Section~\ref{subsec:nurse-agent}) instances, managing access via a lock mechanism proved more efficient than an asynchronous messaging system, which would have significantly increased system overhead and architectural complexity.
+
+\subsection{DoctorAgent}
+\label{subsec:doctor-agent}
+
+\noindent
+The \textbf{DoctorAgent} is responsible for treating patients within the Emergency Department, representing an abstract model of medical examination and treatment. In this simulation, all doctor instances share the same behavior without specialization. Their operational logic is as follows:
+
+\begin{itemize}
+    \item \textbf{Patient Retrieval:} When available, a doctor attempts to retrieve the next patient from the \textbf{QueueManagerArtifact}. If the queue is empty, the doctor remains in an idle state until a new patient is added.
+    \item \textbf{Treatment Simulation:} Upon retrieving a patient, the doctor performs a treatment that lasts for a random duration within a range (minimum to maximum) defined for each triage level. These time ranges were calibrated during development to simulate realistic hospital dynamics.
+    \item \textbf{Condition Improvement:} Following treatment, the patient's triage color may decrease by one or two levels (representing an improvement in their condition) or remain unchanged. This transition is governed by a probability distribution defined to reflect successful medical intervention.
+    \item \textbf{Discharge or Hospitalization:} If the post-treatment color is \textbf{White}, the patient is immediately discharged. For other colors (e.g., \textbf{Green} or \textbf{Blue}), the doctor evaluates the need for hospitalization based on a color-specific probability. If hospitalization is required, the doctor attempts to assign a bed through the \textbf{BedManagerArtifact}.
+\end{itemize}
+
+\subsection{NurseAgent}
+\label{subsec:nurse-agent}
+
+\noindent
+The \textbf{NurseAgent} is responsible for monitoring the conditions of hospitalized patients and managing their periodic re-evaluation.
+
+\noindent
+The number of \textbf{NurseAgent} instances is configurable by the user at the start of the simulation, with the constraint that it must be less than or equal to the total number of beds. To optimize efficiency, the available beds are distributed among the nurses; each agent is responsible for a specific subset of beds, ensuring an equal distribution of the workload.
+
+\noindent
+The core behavior of the \textbf{NurseAgent} consists of a periodic monitoring loop. For each assigned bed, the nurse monitors the occupant's status and, after a predefined interval, autonomously re-inserts the patient into the \textbf{QueueManagerArtifact}. This mechanism ensures that hospitalized patients are consistently re-queued for medical follow-up by a \textbf{DoctorAgent}, allowing for potential triage color updates or discharge.
+
+\subsection{AmbulanceAgent}
+\label{subsec:ambulance-agent}
+
+\noindent
+The \textbf{AmbulanceAgent} is responsible for transporting patients with \textbf{Medium} or \textbf{High} severity levels to the Emergency Department. 
+
+\noindent
+In addition to transportation, this agent simulates the pre-hospital registration process.
+
+\noindent
+Unlike walk-in patients, those arriving via ambulance bypass the \textbf{RegistrationAgent} and are forwarded directly to the \textbf{TriageAgent}.
+
+\subsection{PatientAgent}
+\label{subsec:patient-agent}
+
+\noindent
+The \textbf{PatientAgent} represents an individual patient within the Emergency Department. It acts as a reactive entity, responsible for interacting with all other agents and artifacts throughout its journey from arrival to final discharge.
+
+\noindent
+This agent maintains its own internal state, including its assigned severity level and current triage color. It manages communication by sending registration requests to the \textbf{RegistrationAgent} and responding to instructions from the \textbf{TriageAgent} and \textbf{DoctorAgent}. The \textbf{PatientAgent} remains active in the system until the treatment process is complete or it is discharged from a bed by the \textbf{BedManagerArtifact}.
+
+\section{System Architecture and Workflow}
+\label{sec:architecture-workflow}
+
+\noindent
+The overall architecture of the system and the interactions among agents and artifacts are illustrated in Figure~\ref{fig:system-architecture}. The workflow represents a complete lifecycle of a patient within the Emergency Department, from initial arrival to final discharge.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth,height=0.65\textheight,keepaspectratio]{ED_MAS.png}
+    \caption{Workflow and interaction diagram of the Emergency Department MAS.}
+    \label{fig:system-architecture}
+\end{figure}
+
+\noindent
+As shown in the diagram, the system manages the patient flow through three main stages:
+
+\subsection{Patient Intake and Triage}
+
+\noindent
+The process begins when a \textbf{PatientAgent} is spawned. The system evaluates a branching condition based on the patient's severity and the availability of resources:
+\begin{itemize}
+    \item \textbf{Ambulance Path:} If the severity is Medium or High and an \textbf{AmbulanceAgent} is available, the patient bypasses manual registration.
+    \item \textbf{Walk-in Path:} Otherwise, the patient must interact with the \textbf{RegistrationAgent}, potentially waiting if the desk is busy.
+\end{itemize}
+
+\noindent
+Both paths converge at the \textbf{TriageAgent}, which assigns a clinical priority color and inserts the patient's data into the \textbf{QueueManagerArtifact}.
+
+\subsection{Medical Examination and Treatment}
+
+\noindent
+The \textbf{DoctorAgent} instances act as the primary consumers of the priority queue. A doctor retrieves the next patient from the \textbf{QueueManagerArtifact} and performs the treatment. 
+
+\noindent
+The outcome of the examination leads to a clinical decision based on the updated triage color:
+\begin{itemize}
+    \item \textbf{Discharge:} If the patient's condition is stable (Triage Color: White) or if the doctor determines that hospitalization is not required despite a higher color code (e.g., Green or Blue), the patient is \textbf{Discharged}.
+    \item \textbf{Hospitalization:} If the patient requires continuous monitoring or further stabilization, the doctor attempts to secure a bed through the \textbf{BedManagerArtifact}. This decision is based on a probability distribution tied to the current triage color.
+\end{itemize}
+
+\subsection{Monitoring and Re-evaluation Loop}
+
+\noindent
+Patients assigned to a bed enter a monitoring phase managed by the \textbf{NurseAgent}. This agent periodically checks the patient's status via the \textbf{BedManagerArtifact} and, when appropriate, re-inserts the patient into the \textbf{QueueManagerArtifact}. This creates a feedback loop that ensures hospitalized patients receive follow-up examinations by a \textbf{DoctorAgent} until they are ready for discharge.
+
+\section{User Interface}
+\label{sec:user-interface}
+
+The simulation is controlled and monitored through two distinct graphical interfaces, designed to separate the setup phase from the real-time execution.
+
+\subsection{Configuration Interface}
+\label{subsec:configuration-ui}
+
+\noindent
+The \textbf{Configuration UI} is the initial window presented to the user. It serves as the control panel for initializing the Multi-Agent System by allowing the adjustment of key parameters.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{config_ui.png}
+    \caption{Initial configuration window for simulation parameters.}
+    \label{fig:config-ui}
+\end{figure}
+
+\noindent
+Upon clicking the "Start Simulation" button, the system initializes the agents and artifacts with the specified parameters and opens the \textbf{Main UI}.
+\subsection{Main Simulation Dashboard}
+\label{subsec:main-ui}
+\noindent
+The \textbf{Main UI} provides a real-time overview of the Emergency Department's status, organized into a four-quadrant grid layout to maximize information density.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{main_ui_full.png}
+    \caption{Full overview of the Emergency Department Dashboard.}
+    \label{fig:main-ui-full}
+\end{figure}
+\noindent
+To better illustrate the specific functionalities, the following figures detail the individual components of the dashboard:
+
+% 1. LOGS
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_logs_controls.png}
+    \caption{Detailed view: Event Log and Manual Controls.}
+    \label{fig:ui-logs}
+\end{figure}
+\noindent
+The \textbf{Event Log} (Figure~\ref{fig:ui-logs}) displays a real-time feed of significant system events, such as patient arrivals, triage assignments, doctor-patient interactions, and bed occupancy changes. This log is crucial for monitoring the simulation flow and diagnosing potential issues. It also includes manual controls to spawn a custom number of patients with specific severity levels and a "Quit" button to terminate the simulation.
+
+% 2. QUEUES
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_queues_doctors.png}
+    \caption{Detailed view: Triage/Priority Queues and Doctor Status.}
+    \label{fig:ui-queues}
+\end{figure}
+\noindent
+The \textbf{Waiting Queues and Doctor Status} section (Figure~\ref{fig:ui-queues}) provides a snapshot of the current state of the Triage and Priority Queues. It also lists all active \textbf{DoctorAgent} instances, indicating their current availability and, if busy, the ID of the patient they are attending to.
+
+% 3. TRIAGE CHART
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_triage_chart.png}
+    \caption{Detailed view: Real-time Triage Color Distribution Chart.}
+    \label{fig:ui-chart-colors}
+\end{figure}
+\noindent
+The \textbf{Triage Color Distribution Chart} (Figure~\ref{fig:ui-chart-colors}) dynamically visualizes the proportion of patients across different triage colors. Inspired by the official triage monitoring systems used in the Liguria region \cite{regioneLiguriaPS}, this chart updates in real-time as patients are triaged or treated, providing an immediate overview of the case-mix handled by the department according to standard clinical priority scales.
+% 4. DISCHARGE CHART
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_discharge_chart.png}
+    \caption{Detailed view: Average Discharge Time Statistics Chart.}
+    \label{fig:ui-chart-discharge}
+\end{figure}
+\noindent
+The \textbf{Average Discharge Time Chart} (Figure~\ref{fig:ui-chart-discharge}) tracks the time patients spend in the system before being discharged, categorized by their entry triage color. This metric is essential for evaluating the efficiency of the treatment process and identifying potential bottlenecks.
+
+% 5. BEDS
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_bed.png}
+    \caption{Detailed view: Bed Occupancy and Nursing Status.}
+    \label{fig:ui-beds}
+\end{figure}
+\noindent
+The \textbf{Bed View} (Figure~\ref{fig:ui-beds}) offers a visual representation of all beds. Each bed is color-coded based on the occupant's triage level, with additional indicators showing if a \textbf{NurseAgent} is currently performing a check. This allows for a quick assessment of resource allocation.
+
+% 6. AMBULANCES
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{ui_ambulances.png}
+    \caption{Detailed view: Real-time Ambulance Fleet Monitoring.}
+    \label{fig:ui-ambulances}
+\end{figure}
+\noindent
+Finally, the \textbf{Ambulance Fleet Monitoring} section (Figure~\ref{fig:ui-ambulances}) provides real-time status updates for all \textbf{AmbulanceAgent} instances, indicating whether they are currently on a mission or available for a new dispatch.
+\\
+
+\noindent
+\begin{quote}
+\small\textit{Note.} All screenshots were taken using the default simulation configuration: 6 beds, 2 doctors, 2 nurses, and 2 ambulances.
+\end{quote}
+
+\section{Code Specification and Implementation}
+\label{sec:code-specification}
+
+This section details the technical implementation of the Emergency Department MAS, including the libraries used, the concurrency management strategies, and the overall project structure.
+
+\subsection{Development Stack and Libraries}
+The system is built using \textbf{Java 21} and managed through \textbf{Apache Maven} \cite{maven}. Maven was chosen to handle the project's lifecycle, ensuring consistent builds and managing external dependencies. The core framework leverages the following components:
+\begin{itemize}
+    \item \textbf{JADE (v4.5.0):} The primary framework for agent management and FIPA-compliant ACL messaging \cite{jade-doc}.
+    \item \textbf{JavaFX (v21.0.2):} Used for the graphical user interfaces and real-time visualization of hospital statistics \cite{openjfx}.
+    \item \textbf{SLF4J:} Implemented for robust event logging and debugging across the multi-agent system.
+    \item \textbf{Standard Java Concurrency:} Specifically the \texttt{ReentrantReadWriteLock} to ensure thread-safety within the shared artifacts.
+\end{itemize}
+
+\noindent
+The build process is automated to generate an executable \textit{fat-jar} using the \texttt{maven-shade-plugin}, simplifying the deployment and execution of the simulation.
+
+\subsection{Concurrency and Synchronization}
+A critical challenge in this multi-agent system was managing simultaneous access to shared resources, such as the \textbf{QueueManager} and the \textbf{BedManager}. To prevent \textit{race conditions} while maintaining high performance, the \texttt{java.util.concurrent.locks.ReentrantReadWriteLock} was implemented.
+
+\noindent
+Unlike a standard \texttt{synchronized} block, this lock allows:
+\begin{itemize}
+    \item \textbf{Multiple concurrent readers:} Multiple \textbf{DoctorAgent} or \textbf{NurseAgent} instances can check bed or queue status simultaneously without blocking each other.
+    \item \textbf{Exclusive writing:} When an agent (e.g., a \textbf{TriageAgent}) needs to add a patient or update a triage color, it gains exclusive access to the data structure, ensuring atomicity and consistency.
+\end{itemize}
+
+\subsection{Project Structure and Packages}
+The source code is organized into a modular package structure to ensure separation of concerns:
+\begin{itemize}
+    \item \texttt{it.unige.dibris.mas.agents}: Contains the logic for all agents (\textit{Patient, Doctor, Nurse, etc.}).
+    \item \texttt{it.unige.dibris.mas.behaviours}: Defines the specific JADE behaviors, such as \texttt{TickerBehaviour} for periodic monitoring and \texttt{CyclicBehaviour} for message handling.
+    \item \texttt{it.unige.dibris.mas.ontology}: Defines the data structures and enumerations (e.g., \texttt{TriageColor}, \texttt{PatientSeverity}, \texttt{BedInfo}).
+    \item \texttt{it.unige.dibris.mas.gui}: Manages the JavaFX components and the \texttt{SimulationLogger} for real-time event reporting.
+\end{itemize}
+
+\subsection{Metrics and Repository}
+The final implementation consists of approximately \textbf{2880} lines of code, distributed across \textbf{30} Java files.
+
+\noindent
+The complete source code, including the configuration files and documentation, is available at the official repository \cite{grifone2026edmas}:
+\begin{center}
+    \url{https://github.com/matteogrifone22/sdai-project.git}
+\end{center}
+
+\subsection{Use of Artificial Intelligence and LLMs}
+\label{subsec:ai-disclosure}
+
+LLMs and Generative AI were utilized as auxiliary tools for the following tasks:
+\begin{itemize}
+    \item \textbf{Code Generation and Setup:} To automate the writing of repetitive structural components and to assist in the initial setup of the Maven project structure.
+    \item \textbf{Syntax and UI Design:} To provide guidance on \textbf{JavaFX} syntax and CSS-like styling for the graphical user interface.
+    \item \textbf{Language and Documentation:} To perform grammatical and stylistic checks throughout this report.
+\end{itemize}
+
+
+\section{Future Improvements}
+\label{subsec:future-work}
+
+While the current simulation provides a robust representation of Emergency Department dynamics, it should be considered a foundational model that remains open to several functional enhancements.
+A primary direction for future development could involve increasing the granularity of the clinical workflow, for instance, the \textbf{DoctorAgent} logic could be expanded to distinguish between the initial medical examination and subsequent diagnostic phases,
+such as specialized tests or imaging. Similarly, introducing professional specializations among medical staff would allow for a more realistic assignment of cases based on patient severity.
+Furthermore, the analytical depth of the system could be improved by collecting and displaying more sophisticated real-time statistics, such as resource utilization rates or detailed waiting time distributions.
+These additions would transform the current framework from a general simulation into a highly precise decision-support tool for hospital management.
+
+
+\bibliographystyle{splncs04}
+\bibliography{bibliography.bib}
 
 \end{document}

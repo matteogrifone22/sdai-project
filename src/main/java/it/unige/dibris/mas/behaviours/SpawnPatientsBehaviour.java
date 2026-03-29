@@ -13,7 +13,7 @@ public class SpawnPatientsBehaviour extends TickerBehaviour {
     // For HIGH and MEDIUM severity patients, it will attempt to dispatch an ambulance if available, otherwise it will spawn them normally.
 
     private Random random = new Random();
-    private static final long MAX_SPAWN_INTERVAL = 20000; // Max 1 secondo
+    private static final long MAX_SPAWN_INTERVAL = 20000; // Max 20 seconds between spawns
     private long nextSpawnTime;
 
     public SpawnPatientsBehaviour(Agent agent) {

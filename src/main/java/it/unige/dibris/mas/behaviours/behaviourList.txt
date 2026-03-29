@@ -16,16 +16,25 @@ PolarChart tempo dimissione per colore di ingresso
 Pazienti totali per colore
 
 
-TODO:
-Aggiungere titolo chart codici colori
-
-aggiungere delay 3/5 minuti per prendere nuovo paziente
-
-
 max 15min registration
+
+queue/bed = artefatti
 
 
 2 seconds = 1 minutes
 
 
 
+mvn clean compile exec:java
+
+Ontology (spiego l'ontology del MAS)
+
+Agent/artifact (spiego tutti gli agenti/artefatti)
+
+WorkFLow (mostro il flow del paziente)
+
+UI (Spiego l'interfaccia)
+
+Codespecification (spiego le librerie principali, repo github, quanto codice ho)
+
+FuturWork (spiego come si potrebbe in futuro ingrandire il codice, e le modifiche a cui ho pensato ma che non ho avuto il tempo di fare (avevo solo 10 giorni per il progetto))
