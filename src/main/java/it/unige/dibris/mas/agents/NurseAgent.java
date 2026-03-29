@@ -6,7 +6,7 @@ import it.unige.dibris.mas.behaviours.CheckBedsAndRequeueBehaviour;
 
 public class NurseAgent extends Agent {
     
-    private BedManagerAgent bedManager;
+    private BedManagerArtifact bedManager;
     private int startBed;
     private int endBed;
     private static final long CHECK_INTERVAL = 10000;
@@ -14,7 +14,7 @@ public class NurseAgent extends Agent {
     protected void setup() {
         Object[] args = getArguments();
         if (args != null && args.length >= 3) {
-            bedManager = (BedManagerAgent) args[0];
+            bedManager = (BedManagerArtifact) args[0];
             startBed = (Integer) args[1];
             endBed = (Integer) args[2];
         }

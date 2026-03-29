@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class QueueManagerAgent extends Agent {
+public class QueueManagerArtifact extends Agent {
 
     private LinkedList<Map.Entry<PatientQueueEntry, TriageColor>> patientQueue = new LinkedList<>();
     private ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();

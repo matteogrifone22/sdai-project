@@ -12,7 +12,7 @@ import java.util.Map;
 public class TriageAgent extends Agent {
     
     private Queue<Map.Entry<String, PatientSeverity>> waitingPatients = new LinkedList<>();
-    private QueueManagerAgent queueManager; 
+    private QueueManagerArtifact queueManager; 
     private static final long TRIAGE_DURATION = 10000;  // 10 seconds
 
     
@@ -21,7 +21,7 @@ public class TriageAgent extends Agent {
         
         Object[] args = getArguments();
         if (args != null && args.length > 0) {
-            queueManager = (QueueManagerAgent) args[0];
+            queueManager = (QueueManagerArtifact) args[0];
         }
         
         addBehaviour(new ReceiveFromRegistrationBehaviour()); // receive patients from registration and add them to the triage queue

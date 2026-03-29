@@ -2,7 +2,7 @@ package it.unige.dibris.mas.behaviours;
 
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
-import it.unige.dibris.mas.agents.BedManagerAgent;
+import it.unige.dibris.mas.agents.BedManagerArtifact;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.BedInfo;
 
@@ -12,12 +12,12 @@ public class CheckBedsAndRequeueBehaviour extends TickerBehaviour {
     // if occupied requeue the patient (without removing them from the bed)
     // to give them another chance to be treated by a doctor
 
-    private BedManagerAgent bedManager;
+    private BedManagerArtifact bedManager;
     private int startBed;
     private int endBed;
     private int currentBedIndex;
 
-    public CheckBedsAndRequeueBehaviour(Agent agent, BedManagerAgent bedManager, int startBed, int endBed, long checkInterval) {
+    public CheckBedsAndRequeueBehaviour(Agent agent, BedManagerArtifact bedManager, int startBed, int endBed, long checkInterval) {
         super(agent, checkInterval);
         this.bedManager = bedManager;
         this.startBed = startBed;

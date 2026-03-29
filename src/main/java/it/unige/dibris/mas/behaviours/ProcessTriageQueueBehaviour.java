@@ -3,7 +3,7 @@ package it.unige.dibris.mas.behaviours;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import it.unige.dibris.mas.agents.TriageAgent;
-import it.unige.dibris.mas.agents.QueueManagerAgent;
+import it.unige.dibris.mas.agents.QueueManagerArtifact;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
 import it.unige.dibris.mas.gui.SimulationLogger;
@@ -21,9 +21,9 @@ public class ProcessTriageQueueBehaviour extends TickerBehaviour {
     private PatientSeverity currentPatientSeverity = null;
     private long triageStartTime = 0;
     private long TRIAGE_DURATION = 5000;
-    private QueueManagerAgent queueManager; 
+    private QueueManagerArtifact queueManager; 
 
-    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerAgent queueManager, long triageDuration) {  
+    public ProcessTriageQueueBehaviour(Agent agent, QueueManagerArtifact queueManager, long triageDuration) {  
         super(agent, 1000);
         this.queueManager = queueManager;  
         this.TRIAGE_DURATION = triageDuration;

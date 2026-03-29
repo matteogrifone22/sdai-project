@@ -5,9 +5,9 @@ import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import it.unige.dibris.mas.agents.DoctorAgent;
-import it.unige.dibris.mas.agents.QueueManagerAgent;
+import it.unige.dibris.mas.agents.QueueManagerArtifact;
 import it.unige.dibris.mas.Main;
-import it.unige.dibris.mas.agents.BedManagerAgent;
+import it.unige.dibris.mas.agents.BedManagerArtifact;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientQueueEntry;
 import it.unige.dibris.mas.ontology.TriageColor;
@@ -22,15 +22,15 @@ public class ReceivePatientBehaviour extends CyclicBehaviour {
 
     private long treatmentStartTime = 0;
     private long TREATMENT_DURATION = 20000;
-    private QueueManagerAgent queueManager;
-    private BedManagerAgent bedManager;
+    private QueueManagerArtifact queueManager;
+    private BedManagerArtifact bedManager;
     private Random random = new Random();
     private TriageColor currentPatientColor = null;
     private TriageColor entryColor = null;
     private Long patientArrivalTime = null;
     private PatientQueueEntry currentPatientEntry = null;
 
-    public ReceivePatientBehaviour(Agent agent, QueueManagerAgent queueManager, BedManagerAgent bedManager) {
+    public ReceivePatientBehaviour(Agent agent, QueueManagerArtifact queueManager, BedManagerArtifact bedManager) {
         this.queueManager = queueManager;
         this.bedManager = bedManager;
     }

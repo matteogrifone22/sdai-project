@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import it.unige.dibris.mas.ontology.BedInfo;
 import it.unige.dibris.mas.ontology.PatientQueueEntry;
 
-public class BedManagerAgent extends Agent {
+public class BedManagerArtifact extends Agent {
 
     private Map<Integer, BedInfo> beds = new HashMap<>(); //Map of bed
     private ReentrantReadWriteLock bedsLock = new ReentrantReadWriteLock(); //Lock for bed access
@@ -159,7 +159,7 @@ public class BedManagerAgent extends Agent {
     }
 
     // get the queue manager agent
-    public QueueManagerAgent getQueueManager() {
+    public QueueManagerArtifact getQueueManager() {
         return it.unige.dibris.mas.Main.sharedQueueManager;
     }
 }

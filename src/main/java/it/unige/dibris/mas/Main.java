@@ -17,9 +17,9 @@ import jade.wrapper.AgentController;
 import it.unige.dibris.mas.gui.SimulationLogger;
 import it.unige.dibris.mas.ontology.PatientSeverity;
 import it.unige.dibris.mas.ontology.TriageColor;
-import it.unige.dibris.mas.agents.QueueManagerAgent;
+import it.unige.dibris.mas.agents.QueueManagerArtifact;
 import it.unige.dibris.mas.agents.AmbulanceAgent;
-import it.unige.dibris.mas.agents.BedManagerAgent;
+import it.unige.dibris.mas.agents.BedManagerArtifact;
 import it.unige.dibris.mas.gui.ConfigurationGui;
 import it.unige.dibris.mas.gui.GuiManager;
 
@@ -161,8 +161,8 @@ public class Main extends Application {
         }
     }
 
-    public static QueueManagerAgent sharedQueueManager = null;
-    public static BedManagerAgent sharedBedManager = null;
+    public static QueueManagerArtifact sharedQueueManager = null;
+    public static BedManagerArtifact sharedBedManager = null;
 
     private void initializeED(int totalBeds, int numDoctors, int numNurses, int numAmbulances) {
         try {
@@ -175,7 +175,7 @@ public class Main extends Application {
 
             AgentController queueManagerAgentController = container.createNewAgent(
                     "QueueManagerAgent",
-                    "it.unige.dibris.mas.agents.QueueManagerAgent",
+                    "it.unige.dibris.mas.agents.QueueManagerArtifact",
                     null);
             queueManagerAgentController.start();
 
@@ -189,7 +189,7 @@ public class Main extends Application {
             triageAgentController.start();
             AgentController bedManagerAgentController = container.createNewAgent(
                     "BedManagerAgent",
-                    "it.unige.dibris.mas.agents.BedManagerAgent",
+                    "it.unige.dibris.mas.agents.BedManagerArtifact",
                     null);
             bedManagerAgentController.start();
 
