@@ -22,8 +22,6 @@ The project highlights the use of **Shared Artifacts** and advanced concurrency 
 * **Build Tool:** Apache Maven
 * **Middleware:** JADE (Java Agent DEvelopment Framework) v4.5.0
 * **GUI:** JavaFX v21.0.2
-* **Data Handling:** GSON (JSON processing) & SLF4J (Logging)
-
 ---
 
 ## Prerequisites
