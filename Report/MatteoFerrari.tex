@@ -16,20 +16,22 @@
 \maketitle             
 \tableofcontents
 \newpage
-\section{Details of the proposal}
+\section{Details of the Proposal}
 \label{sec:yourProposal}
 
-The project I propose consists in the design and implementation of a Multi-Agent System for the management and simulation of an Emergency Department.
+\noindent
+The project consists of the design and implementation of a Multi-Agent System (MAS) for the management and simulation of a hospital Emergency Department. The goal is to model the clinical workflow and the interactions between autonomous agents representing the main actors and resources of the department. 
 
-\subsection{Full specification of your proposal}
+\subsection{Full Specification of the Proposal}
 \label{subsec:specification}
 
-The following is the description I gave in the proposal form, which I used as a starting point for the development of the project, but which I have then modified and expanded during the development of the project itself.
+\noindent
+The following section presents the original description submitted in the initial proposal form. This served as the conceptual foundation for the project, though the system was significantly expanded and refactored during the actual development phase to better reflect real-world dynamics.
 
 \vspace{\baselineskip}
 
 \noindent
-The project consists of the design and implementation of a Multi-Agent System for the management and simulation of an Emergency Department. The goal is to model the main actors involved in an Emergency Department as autonomous agents and to let them interact with each other.
+The project consists of the design and implementation of a Multi-Agent System for the management and simulation of an Emergency Department. The goal is to model the primary actors involved in an Emergency Department as autonomous agents and enable them to interact with one another.
 
 \noindent
 The project is inspired by the paper \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC2656074/}{``An Agent-Based Simulation Tool for\allowbreak\ Scheduling Emergency Department Physicians''} \cite{jones2008agent}.
@@ -40,31 +42,30 @@ The system will be composed of the following agents:
 \item 1 Triage Agent
 \item 1 Queue Manager Agent
 \item 1 Bed Manager Agent
-\item n Bed Agents
-\item n Doctor Agents
+\item $n$ Bed Agents
+\item $n$ Doctor Agents
 \item 1 Ambulance Agent
-\item n Patient Agents
+\item $n$ Patient Agents
 \end{itemize}
 
 \vspace{\baselineskip}
 
 \noindent
-The main differences with the above list of agents are:
+During the implementation, several architectural improvements and functional expansions were introduced. The main differences compared to the initial plan are:
+
 \begin{itemize}
-\item Queue Manager Agent and Bed Manager Agent are not implemented as agents, but as artifacts, which are shared resources that can be accessed by other agents. In particular, the Bed Agents become a dictionary inside the Bed Manager Artifact.
-\item I added a Registration Agent, which is responsible for registering patients in the Emergency Department.
-\item I implemented more than one Ambulance Agent; the number can be chosen by the user at the beginning of the simulation.
-\item I added an Automatic Spawn Agent, which is responsible for automatically spawning new patients in the Emergency Department at random intervals.
-\item I implemented a configurable number of Nurse Agents, which can be chosen by the user at the start of the simulation.
+\item \textbf{Transition to Artifacts:} The \textbf{Queue Manager} and \textbf{Bed Manager} are not implemented as agents but as \textbf{Artifacts}. Consequently, the individual \textbf{Bed Agents} have been integrated into a centralized dictionary within the \textbf{Bed Manager Artifact}.
+\item \textbf{Registration Agent:} I introduced a dedicated agent responsible for the initial intake and registration of walk-in patients.
+\item \textbf{Enhanced Ambulance Fleet:} The system supports multiple \textbf{Ambulance Agents}.
+\item \textbf{Automatic Spawn Agent:} To ensure a dynamic simulation, I added an agent responsible for generating new patients at randomized intervals.
+\item \textbf{Nurse Agents:} A configurable number of \textbf{Nurse Agents} was implemented to manage periodic patient re-evaluation and bed monitoring.
 \end{itemize}
 
-\label{subsec:kind}
 
-\subsection{The range of points/difficulty of your proposal}
+\subsection{The Difficulty of The Proposal}
 \label{subsec:points}
 
-The project is a creative project, and is classified as hard because it requires the design and implementation of a complex Multi-Agent System, with many different types of agents and many interactions between them.
-
+The project is a creative project, and is classified as \textbf{hard} because it requires the design and implementation of a complex Multi-Agent System, with many different types of agents and many interactions between them.
 \pagebreak
 
 \section{Domain Model (Ontology)}
